@@ -1,10 +1,14 @@
 add_executable(Luwow.RunScriptWithGui)
 target_include_directories(Luwow.RunScriptWithGui PRIVATE
     ${GUI_ROOT}/src/Gui
-    ${GUI_ROOT}/src/Gui/Windows
     ${GUI_ROOT}/src/GuiTest
     ${ENGINE_ROOT}
 )
+if(WIN32)
+    target_include_directories(Luwow.RunScriptWithGui PRIVATE ${GUI_ROOT}/src/Gui/Windows)
+elseif(APPLE)
+    target_include_directories(Luwow.RunScriptWithGui PRIVATE ${GUI_ROOT}/src/Gui/Mac)
+endif()
 target_link_libraries(Luwow.RunScriptWithGui PRIVATE
     Luwow.Engine
     Luwow.Gui
