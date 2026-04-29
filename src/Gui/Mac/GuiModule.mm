@@ -87,7 +87,7 @@ static int createButton(lua_State* L) {
 }
 
 const char* GuiModule::getModuleName() const {
-    return "gui.luau";
+    return "gui";
 }
 
 static LuauExport exports[] = {
