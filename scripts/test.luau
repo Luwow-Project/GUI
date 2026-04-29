@@ -1,4 +1,4 @@
-local gui = require("gui.luau")
+local gui = require("@Luwow/gui")
 
 local window = gui.createWindow({
   Type = "Window" :: "Window",
