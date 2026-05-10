@@ -1,5 +1,4 @@
 -- This is the type system for the GUI API as it exists in C++ code.
--- declare require: typeof(require) & ("@Luwow/gui") -> Gui
 
 export type CommonWindowDescriptor = {
     Left: number?,
