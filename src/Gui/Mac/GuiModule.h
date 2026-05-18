@@ -12,6 +12,7 @@ public:
     ~GuiModule() = default;
 
     const char* getModuleName() const override;
+    const char* getModuleAlias() const override;
     const LuauExport* getExports() const override;
     ILuauModule* initialize(Engine* engine) override;
     IWindow* createWindow(const WindowDescriptor& descriptor) override;
