@@ -90,6 +90,10 @@ const char* GuiModule::getModuleName() const {
     return "gui";
 }
 
+const char* GuiModule::getModuleAlias() const {
+    return "Luwow";
+}
+
 static LuauExport exports[] = {
     { "createWindow", createWindow },
     { "createButton", createButton },
