@@ -6,6 +6,7 @@ local window = gui.createWindow({
   Width = 400,
   Height = 300,
 })
+
 local _menuBar = gui.createMenuBar({
   Type = "MenuBar" :: "MenuBar",
   Menus = {
