@@ -37,9 +37,30 @@ struct TextBoxDescriptor {
     int Top = 0;
 };
 
+struct MenuItemDescriptor {
+    std::string Type = "";
+    std::string Title = "";
+    lua_State* L = nullptr;
+    int OnSelectedRef = LUA_NOREF;
+};
+
+struct MenuDescriptor {
+    std::string Type = "";
+    std::string Title = "";
+    std::vector<MenuItemDescriptor> Items;
+};
+
+struct MenuBarDescriptor {
+    std::string Type = "";
+    std::vector<MenuDescriptor> Menus;
+};
+
 // Methods for getting the descriptors from their respective Luau tables.
 WindowDescriptor getWindowDescriptor(lua_State* L);
 ButtonDescriptor getButtonDescriptor(lua_State* L);
 TextBoxDescriptor getTextBoxDescriptor(lua_State* L);
+MenuItemDescriptor getMenuItemDescriptor(lua_State* L);
+MenuDescriptor getMenuDescriptor(lua_State* L);
+MenuBarDescriptor getMenuBarDescriptor(lua_State* L);
 
 } // namespace Luwow::Gui

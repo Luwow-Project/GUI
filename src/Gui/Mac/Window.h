@@ -10,6 +10,7 @@ public:
     Window(const WindowDescriptor& descriptor);
     ~Window() override;
     void show() override;
+    void close() override;
     uint16_t registerCommandControl(ICommandControl* commandControl) override;
     ICommandControl* getCommandControl(uint16_t id) const override;
 

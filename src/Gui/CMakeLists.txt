@@ -13,6 +13,10 @@ if(WIN32)
         IGuiModule.h
         Windows/Button.cpp
         Windows/Button.h
+        Windows/MenuBar.cpp
+        Windows/MenuBar.h
+        Windows/MenuItem.cpp
+        Windows/MenuItem.h
         Windows/GuiModule.cpp
         Windows/GuiModule.h
         Windows/Window.cpp
@@ -27,6 +31,10 @@ elseif(APPLE)
         IGuiModule.h
         Mac/Button.mm
         Mac/Button.h
+        Mac/MenuBar.mm
+        Mac/MenuBar.h
+        Mac/MenuItem.mm
+        Mac/MenuItem.h
         Mac/GuiModule.mm
         Mac/GuiModule.h
         Mac/Window.mm

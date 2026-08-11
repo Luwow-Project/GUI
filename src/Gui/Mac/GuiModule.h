@@ -17,6 +17,7 @@ public:
     ILuauModule* initialize(Engine* engine) override;
     IWindow* createWindow(const WindowDescriptor& descriptor) override;
     IButton* createButton(const ButtonDescriptor& descriptor, IWindow* parent) override;
+    IMenuBar* createMenuBar(const MenuBarDescriptor& descriptor, IWindow* parent) override;
     static void MessagePump();
 
 private:

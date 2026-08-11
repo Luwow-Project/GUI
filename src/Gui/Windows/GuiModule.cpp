@@ -2,6 +2,7 @@
 #include "Engine.h"
 #include "Window.h"
 #include "Button.h"
+#include "MenuBar.h"
 
 #include "lua.h"
 #include "lualib.h"
@@ -100,6 +101,10 @@ IButton* GuiModule::createButton(const ButtonDescriptor& descriptor, IWindow* pa
     return new Button(descriptor, parent);
 }
 
+IMenuBar* GuiModule::createMenuBar(const MenuBarDescriptor& descriptor, IWindow* parent) {
+    return new MenuBar(descriptor, parent);
+}
+
 static int createWindow(lua_State* L) {
     GuiModule* gui = getModuleInstance(L);
     WindowDescriptor windowDescriptor = getWindowDescriptor(L);
@@ -132,6 +137,23 @@ static int createButton(lua_State* L) {
     return 1;
 }
 
+static int createMenuBar(lua_State* L) {
+    GuiModule* gui = getModuleInstance(L);
+    MenuBarDescriptor menuBarDescriptor = getMenuBarDescriptor(L);
+
+    luaL_checktype(L, 2, LUA_TTABLE);
+    lua_getfield(L, 2, "__window_ptr");
+    Window* parent = static_cast<Window*>(lua_touserdata(L, -1));
+    if (!parent) {
+        luaL_error(L, "Parent window not found creating menu bar.");
+    }
+    lua_pop(L, 1);
+
+    MenuBar* menuBar = static_cast<MenuBar*>(gui->createMenuBar(menuBarDescriptor, parent));
+    getMenuBarTable(L, menuBar);
+    return 1;
+}
+
 const char* GuiModule::getModuleName() const {
     return "gui";
 }
@@ -143,6 +165,7 @@ const char* GuiModule::getModuleAlias() const {
 static LuauExport exports[] = {
     { "createWindow", createWindow },
     { "createButton", createButton },
+    { "createMenuBar", createMenuBar },
     { nullptr, nullptr }
 };
 

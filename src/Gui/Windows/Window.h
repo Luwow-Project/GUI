@@ -12,6 +12,7 @@ public:
     Window(const WindowDescriptor& descriptor);
     ~Window();
     virtual void show() override;
+    virtual void close() override;
     virtual uint16_t registerCommandControl(ICommandControl* commandControl) override;
     virtual ICommandControl* getCommandControl(uint16_t id) const override;
 
