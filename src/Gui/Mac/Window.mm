@@ -94,6 +94,10 @@ void Window::show() {
     [w makeKeyAndOrderFront:nil];
 }
 
+void Window::close() {
+    // TODO: Implement closing the window
+}
+
 void* Window::getNativeContentView() const {
     NSWindow* w = (__bridge NSWindow*)nativeWindow;
     if (!w) {

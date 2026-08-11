@@ -13,6 +13,10 @@ if(WIN32)
         IGuiModule.h
         Windows/Button.cpp
         Windows/Button.h
+        Windows/MenuBar.cpp
+        Windows/MenuBar.h
+        Windows/MenuItem.cpp
+        Windows/MenuItem.h
         Windows/GuiModule.cpp
         Windows/GuiModule.h
         Windows/Window.cpp

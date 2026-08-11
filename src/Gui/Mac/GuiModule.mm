@@ -7,6 +7,7 @@
 
 #include "lua.h"
 #include "lualib.h"
+#include <stdexcept>
 #include <string>
 
 namespace Luwow::Gui {
@@ -56,6 +57,12 @@ IButton* GuiModule::createButton(const ButtonDescriptor& descriptor, IWindow* pa
     return new Button(descriptor, parent);
 }
 
+IMenuBar* GuiModule::createMenuBar(const MenuBarDescriptor& descriptor, IWindow* parent) {
+    (void)descriptor;
+    (void)parent;
+    throw std::runtime_error("Menu bars are not supported on Mac");
+}
+
 static int createWindow(lua_State* L) {
     GuiModule* gui = getModuleInstance(L);
     WindowDescriptor windowDescriptor = getWindowDescriptor(L);
@@ -86,6 +93,11 @@ static int createButton(lua_State* L) {
     return 1;
 }
 
+static int createMenuBar(lua_State* L) {
+    luaL_error(L, "Menu bars are not supported on Mac.");
+    return 0;
+}
+
 const char* GuiModule::getModuleName() const {
     return "gui";
 }
@@ -97,6 +109,7 @@ const char* GuiModule::getModuleAlias() const {
 static LuauExport exports[] = {
     { "createWindow", createWindow },
     { "createButton", createButton },
+    { "createMenuBar", createMenuBar },
     { nullptr, nullptr }
 };
 
