@@ -31,6 +31,10 @@ elseif(APPLE)
         IGuiModule.h
         Mac/Button.mm
         Mac/Button.h
+        Mac/MenuBar.mm
+        Mac/MenuBar.h
+        Mac/MenuItem.mm
+        Mac/MenuItem.h
         Mac/GuiModule.mm
         Mac/GuiModule.h
         Mac/Window.mm

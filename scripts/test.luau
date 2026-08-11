@@ -6,7 +6,6 @@ local window = gui.createWindow({
   Width = 400,
   Height = 300,
 })
---[[
 local _menuBar = gui.createMenuBar({
   Type = "MenuBar" :: "MenuBar",
   Menus = {
@@ -33,7 +32,6 @@ local _menuBar = gui.createMenuBar({
     },
   },
 }, window)
---]]
 
 local numPresses = 0
 local _button = gui.createButton({

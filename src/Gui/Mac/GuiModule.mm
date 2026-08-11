@@ -4,6 +4,7 @@
 #include "Engine.h"
 #include "Window.h"
 #include "Button.h"
+#include "MenuBar.h"
 
 #include "lua.h"
 #include "lualib.h"
@@ -58,9 +59,7 @@ IButton* GuiModule::createButton(const ButtonDescriptor& descriptor, IWindow* pa
 }
 
 IMenuBar* GuiModule::createMenuBar(const MenuBarDescriptor& descriptor, IWindow* parent) {
-    (void)descriptor;
-    (void)parent;
-    throw std::runtime_error("Menu bars are not supported on Mac");
+    return new MenuBar(descriptor, parent);
 }
 
 static int createWindow(lua_State* L) {
@@ -94,8 +93,20 @@ static int createButton(lua_State* L) {
 }
 
 static int createMenuBar(lua_State* L) {
-    luaL_error(L, "Menu bars are not supported on Mac.");
-    return 0;
+    GuiModule* gui = getModuleInstance(L);
+    MenuBarDescriptor menuBarDescriptor = getMenuBarDescriptor(L);
+
+    luaL_checktype(L, 2, LUA_TTABLE);
+    lua_getfield(L, 2, "__window_ptr");
+    Window* parent = static_cast<Window*>(lua_touserdata(L, -1));
+    if (!parent) {
+        luaL_error(L, "Parent window not found creating menu bar.");
+    }
+    lua_pop(L, 1);
+
+    MenuBar* menuBar = static_cast<MenuBar*>(gui->createMenuBar(menuBarDescriptor, parent));
+    getMenuBarTable(L, menuBar);
+    return 1;
 }
 
 const char* GuiModule::getModuleName() const {
