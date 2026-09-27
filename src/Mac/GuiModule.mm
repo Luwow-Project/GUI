@@ -5,6 +5,7 @@
 #include "Window.h"
 #include "Button.h"
 #include "MenuBar.h"
+#include "Handles.h"
 
 #include "lua.h"
 #include "lualib.h"
@@ -28,6 +29,7 @@ GuiModule::GuiModule() : engine(nullptr) {}
 ILuauModule* GuiModule::initialize(Engine* engine) {
     GuiModule* gui = new GuiModule();
     gui->setEngine(engine);
+    registerHandles(engine->getMainState());
     return gui;
 }
 
@@ -65,47 +67,25 @@ IMenuBar* GuiModule::createMenuBar(const MenuBarDescriptor& descriptor, IWindow*
 static int createWindow(lua_State* L) {
     GuiModule* gui = getModuleInstance(L);
     WindowDescriptor windowDescriptor = getWindowDescriptor(L);
-    Window* window = static_cast<Window*>(gui->createWindow(windowDescriptor));
-    getWindowTable(L, window);
-
-    lua_setreadonly(L, -1, 0);
-    lua_pushlightuserdata(L, window);
-    lua_setfield(L, -2, "__window_ptr");
-    lua_setreadonly(L, -1, 1);
+    LuauWindow::Push(L, gui->createWindow(windowDescriptor));
     return 1;
 }
 
 static int createButton(lua_State* L) {
     GuiModule* gui = getModuleInstance(L);
     ButtonDescriptor buttonDescriptor = getButtonDescriptor(L);
+    IWindow* parent = LuauWindow::Check(L, 2)->get();
 
-    luaL_checktype(L, 2, LUA_TTABLE);
-    lua_getfield(L, 2, "__window_ptr");
-    Window* parent = static_cast<Window*>(lua_touserdata(L, -1));
-    if (!parent) {
-        luaL_error(L, "Parent window not found creating button.");
-    }
-    lua_pop(L, 1);
-
-    Button* button = static_cast<Button*>(gui->createButton(buttonDescriptor, parent));
-    getButtonTable(L, button);
+    LuauButton::Push(L, gui->createButton(buttonDescriptor, parent));
     return 1;
 }
 
 static int createMenuBar(lua_State* L) {
     GuiModule* gui = getModuleInstance(L);
     MenuBarDescriptor menuBarDescriptor = getMenuBarDescriptor(L);
+    IWindow* parent = LuauWindow::Check(L, 2)->get();
 
-    luaL_checktype(L, 2, LUA_TTABLE);
-    lua_getfield(L, 2, "__window_ptr");
-    Window* parent = static_cast<Window*>(lua_touserdata(L, -1));
-    if (!parent) {
-        luaL_error(L, "Parent window not found creating menu bar.");
-    }
-    lua_pop(L, 1);
-
-    MenuBar* menuBar = static_cast<MenuBar*>(gui->createMenuBar(menuBarDescriptor, parent));
-    getMenuBarTable(L, menuBar);
+    LuauMenuBar::Push(L, gui->createMenuBar(menuBarDescriptor, parent));
     return 1;
 }
 

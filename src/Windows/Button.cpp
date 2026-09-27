@@ -48,11 +48,4 @@ void Button::onCommand() {
     lua_pcall(L, 0, 0, 0);
 }
 
-void getButtonTable(lua_State* L, Button* button) {
-    lua_createtable(L, 0, 0);
-    lua_pushlightuserdata(L, button);
-    lua_setfield(L, -2, "button");
-    lua_setreadonly(L, -1, 1);
-}
-
 } // namespace Luwow::Gui

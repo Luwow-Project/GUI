@@ -6,6 +6,6 @@ repository like https://github.com/Luwow-Project/Release
 
 ## Project Overview
 
-This project contains the sources for Luwow GUI library and a test executable runscriptwithgui.
+This project contains the sources for Luwow GUI library.
 
 The included scripts in the scripts folder demonstrate the basic functionality of the library.

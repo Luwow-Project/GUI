@@ -67,24 +67,6 @@ Window::~Window() {
     }
 }
 
-static int show(lua_State* L) {
-    Window* window = static_cast<Window*>(lua_touserdata(L, lua_upvalueindex(1)));
-    if (!window) {
-        throw std::runtime_error("Window not found");
-    }
-    window->show();
-    return 0;
-}
-
-static int close(lua_State* L) {
-    Window* window = static_cast<Window*>(lua_touserdata(L, lua_upvalueindex(1)));
-    if (!window) {
-        throw std::runtime_error("Window not found");
-    }
-    window->close();
-    return 0;
-}
-
 uint16_t Window::registerCommandControl(ICommandControl* commandControl) {
     uint16_t id = nextCommandId++;
     commandControls[id] = commandControl;
@@ -117,17 +99,6 @@ void* Window::getNativeContentView() const {
         return nullptr;
     }
     return (__bridge void*)[w contentView];
-}
-
-void getWindowTable(lua_State* L, Window* window) {
-    lua_createtable(L, 0, 2);
-    lua_pushlightuserdata(L, window);
-    lua_pushcclosure(L, &show, "show", 1);
-    lua_setfield(L, -2, "show");
-    lua_pushlightuserdata(L, window);
-    lua_pushcclosure(L, &close, "close", 1);
-    lua_setfield(L, -2, "close");
-    lua_setreadonly(L, -1, 1);
 }
 
 } // namespace Luwow::Gui

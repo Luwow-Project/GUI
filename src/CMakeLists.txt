@@ -1,16 +1,18 @@
 add_library(Luwow.Gui STATIC)
 target_include_directories(Luwow.Gui PRIVATE
-    ${GUI_ROOT}/src/Gui
+    ${GUI_ROOT}/src
     ${ENGINE_ROOT}
 )
 target_link_libraries(Luwow.Gui PRIVATE Luwow.Engine)
 
 if(WIN32)
-    target_include_directories(Luwow.Gui PRIVATE ${GUI_ROOT}/src/Gui/Windows)
+    target_include_directories(Luwow.Gui PRIVATE ${GUI_ROOT}/src/Windows)
     target_sources(Luwow.Gui PRIVATE
         Descriptors.cpp
         Descriptors.h
         IGuiModule.h
+        Handles.cpp
+        Handles.h
         Windows/Button.cpp
         Windows/Button.h
         Windows/MenuBar.cpp
@@ -24,11 +26,13 @@ if(WIN32)
     )
 elseif(APPLE)
     find_library(COCOA_FRAMEWORK Cocoa REQUIRED)
-    target_include_directories(Luwow.Gui PRIVATE ${GUI_ROOT}/src/Gui/Mac)
+    target_include_directories(Luwow.Gui PRIVATE ${GUI_ROOT}/src/Mac)
     target_sources(Luwow.Gui PRIVATE
         Descriptors.cpp
         Descriptors.h
         IGuiModule.h
+        Handles.cpp
+        Handles.h
         Mac/Button.mm
         Mac/Button.h
         Mac/MenuBar.mm
@@ -49,8 +53,8 @@ endif()
 
 # add_library(Luwow.Gui.Dll SHARED)
 # target_include_directories(Luwow.Gui.dll PRIVATE
-#     ${GUI_ROOT}/src/Gui
-#     ${GUI_ROOT}/src/Gui/Windows
+#     ${GUI_ROOT}/src/
+#     ${GUI_ROOT}/src/Windows
 #     ${ENGINE_ROOT}
 # )
 # target_link_libraries(Luwow.Gui.dll PRIVATE Luwow.Engine)
