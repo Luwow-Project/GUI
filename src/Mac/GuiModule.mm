@@ -1,7 +1,7 @@
 #import <Cocoa/Cocoa.h>
 
 #include "GuiModule.h"
-#include "Engine.h"
+#include "ILuauHost.h"
 #include "Window.h"
 #include "Button.h"
 #include "MenuBar.h"
@@ -14,7 +14,7 @@
 
 namespace Luwow::Gui {
 using ILuauModule = Luwow::Engine::ILuauModule;
-using Engine = Luwow::Engine::Engine;
+using ILuauHost = Luwow::Engine::ILuauHost;
 
 static GuiModule* getModuleInstance(lua_State* L) {
     GuiModule* gui = static_cast<GuiModule*>(lua_touserdata(L, lua_upvalueindex(1)));
@@ -24,12 +24,12 @@ static GuiModule* getModuleInstance(lua_State* L) {
     return gui;
 }
 
-GuiModule::GuiModule() : engine(nullptr) {}
+GuiModule::GuiModule() : host(nullptr) {}
 
-ILuauModule* GuiModule::initialize(Engine* engine) {
+ILuauModule* GuiModule::initialize(ILuauHost* host) {
     GuiModule* gui = new GuiModule();
-    gui->setEngine(engine);
-    registerHandles(engine->getMainState());
+    gui->setHost(host);
+    registerHandles(host->getMainState());
     return gui;
 }
 
@@ -40,8 +40,8 @@ void GuiModule::MessagePump() {
     }
 }
 
-void GuiModule::setEngine(Engine* engine) {
-    this->engine = engine;
+void GuiModule::setHost(ILuauHost* host) {
+    this->host = host;
 
     @autoreleasepool {
         [NSApplication sharedApplication];
@@ -49,7 +49,7 @@ void GuiModule::setEngine(Engine* engine) {
         [NSApp finishLaunching];
     }
 
-    engine->setMessagePumpCallback(MessagePump);
+    host->setMessagePumpCallback(MessagePump);
 }
 
 IWindow* GuiModule::createWindow(const WindowDescriptor& descriptor) {
@@ -109,3 +109,5 @@ const LuauExport* GuiModule::getExports() const {
 }
 
 } // namespace Luwow::Gui
+
+LUWOW_REGISTER_MODULE(Luwow::Gui::GuiModule)

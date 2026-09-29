@@ -1,5 +1,5 @@
 #include "GuiModule.h"
-#include "Engine.h"
+#include "ILuauHost.h"
 #include "Window.h"
 #include "Button.h"
 #include "MenuBar.h"
@@ -14,7 +14,7 @@
 
 namespace Luwow::Gui {
 using ILuauModule = Luwow::Engine::ILuauModule;
-using Engine = Luwow::Engine::Engine;
+using ILuauHost = Luwow::Engine::ILuauHost;
 
 // For all methods that require the Gui instance, we need to get it from the userdata.
 static GuiModule* getModuleInstance(lua_State* L) {
@@ -25,12 +25,12 @@ static GuiModule* getModuleInstance(lua_State* L) {
     return gui;
 }
 
-GuiModule::GuiModule() : engine(nullptr) {}
+GuiModule::GuiModule() : host(nullptr) {}
 
-ILuauModule* GuiModule::initialize(Engine* engine) {
+ILuauModule* GuiModule::initialize(ILuauHost* host) {
     GuiModule* gui = new GuiModule();
-    gui->setEngine(engine);
-    registerHandles(engine->getMainState());
+    gui->setHost(host);
+    registerHandles(host->getMainState());
     return gui;
 }
 
@@ -75,8 +75,8 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
     }
 }
 
-void GuiModule::setEngine(Engine* engine) {
-    this->engine = engine;
+void GuiModule::setHost(ILuauHost* host) {
+    this->host = host;
 
     WNDCLASSEXA wcex;
     wcex.cbSize = sizeof(WNDCLASSEXA);
@@ -92,7 +92,7 @@ void GuiModule::setEngine(Engine* engine) {
     wcex.lpszClassName = "LuwowWindow";
     wcex.hIconSm = LoadIcon(NULL, IDI_APPLICATION);
     RegisterClassExA(&wcex);
-    engine->setMessagePumpCallback(MessagePump);
+    host->setMessagePumpCallback(MessagePump);
 }
 
 IWindow* GuiModule::createWindow(const WindowDescriptor& descriptor) {
@@ -152,3 +152,5 @@ const LuauExport* GuiModule::getExports() const {
 }
 
 } // namespace Luwow::Gui
+
+LUWOW_REGISTER_MODULE(Luwow::Gui::GuiModule)
