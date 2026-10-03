@@ -83,11 +83,4 @@ MenuBar::~MenuBar() {
     }
 }
 
-void getMenuBarTable(lua_State* L, MenuBar* menuBar) {
-    lua_createtable(L, 0, 0);
-    lua_pushlightuserdata(L, menuBar);
-    lua_setfield(L, -2, "menuBar");
-    lua_setreadonly(L, -1, 1);
-}
-
 } // namespace Luwow::Gui

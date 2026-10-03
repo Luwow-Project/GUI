@@ -25,6 +25,4 @@ private:
     void* nativeDelegate = nullptr;
 };
 
-void getWindowTable(lua_State* L, Window* window);
-
 } // namespace Luwow::Gui

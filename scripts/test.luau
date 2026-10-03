@@ -26,7 +26,7 @@ local _menuBar = gui.createMenuBar({
           Title = "&Quit",
           OnSelected = function()
             print("Quit selected")
-            window.close()
+            window:close()
           end,
         },
       },
@@ -48,4 +48,4 @@ local _button = gui.createButton({
   Top = 40,
 }, window)
 
-window.show()
+window:show()

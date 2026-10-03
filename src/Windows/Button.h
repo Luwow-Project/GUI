@@ -1,22 +1,20 @@
 #pragma once
 
 #include "IGuiModule.h"
+#include <windows.h>
 
 namespace Luwow::Gui {
 
 class Button : public IButton {
 public:
     Button(const ButtonDescriptor& descriptor, IWindow* parent);
-    ~Button() override;
+    ~Button();
 
-    void onCommand() override;
+    virtual void onCommand() override;
 
 private:
     ButtonDescriptor descriptor;
-    void* nativeButton = nullptr;
-    void* nativeTarget = nullptr;
+    HWND hButton;
 };
-
-void getButtonTable(lua_State* L, Button* button);
 
 } // namespace Luwow::Gui

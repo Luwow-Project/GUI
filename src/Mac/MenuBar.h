@@ -17,6 +17,4 @@ private:
     std::vector<std::unique_ptr<MenuItem>> items;
 };
 
-void getMenuBarTable(lua_State* L, MenuBar* menuBar);
-
 } // namespace Luwow::Gui

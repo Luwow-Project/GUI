@@ -1,10 +1,11 @@
 #import <Cocoa/Cocoa.h>
 
 #include "GuiModule.h"
-#include "Engine.h"
+#include "ILuauHost.h"
 #include "Window.h"
 #include "Button.h"
 #include "MenuBar.h"
+#include "Handles.h"
 
 #include "lua.h"
 #include "lualib.h"
@@ -13,7 +14,7 @@
 
 namespace Luwow::Gui {
 using ILuauModule = Luwow::Engine::ILuauModule;
-using Engine = Luwow::Engine::Engine;
+using ILuauHost = Luwow::Engine::ILuauHost;
 
 static GuiModule* getModuleInstance(lua_State* L) {
     GuiModule* gui = static_cast<GuiModule*>(lua_touserdata(L, lua_upvalueindex(1)));
@@ -23,11 +24,12 @@ static GuiModule* getModuleInstance(lua_State* L) {
     return gui;
 }
 
-GuiModule::GuiModule() : engine(nullptr) {}
+GuiModule::GuiModule() : host(nullptr) {}
 
-ILuauModule* GuiModule::initialize(Engine* engine) {
+ILuauModule* GuiModule::initialize(ILuauHost* host) {
     GuiModule* gui = new GuiModule();
-    gui->setEngine(engine);
+    gui->setHost(host);
+    registerHandles(host->getMainState());
     return gui;
 }
 
@@ -38,8 +40,8 @@ void GuiModule::MessagePump() {
     }
 }
 
-void GuiModule::setEngine(Engine* engine) {
-    this->engine = engine;
+void GuiModule::setHost(ILuauHost* host) {
+    this->host = host;
 
     @autoreleasepool {
         [NSApplication sharedApplication];
@@ -47,7 +49,7 @@ void GuiModule::setEngine(Engine* engine) {
         [NSApp finishLaunching];
     }
 
-    engine->setMessagePumpCallback(MessagePump);
+    host->setMessagePumpCallback(MessagePump);
 }
 
 IWindow* GuiModule::createWindow(const WindowDescriptor& descriptor) {
@@ -65,47 +67,25 @@ IMenuBar* GuiModule::createMenuBar(const MenuBarDescriptor& descriptor, IWindow*
 static int createWindow(lua_State* L) {
     GuiModule* gui = getModuleInstance(L);
     WindowDescriptor windowDescriptor = getWindowDescriptor(L);
-    Window* window = static_cast<Window*>(gui->createWindow(windowDescriptor));
-    getWindowTable(L, window);
-
-    lua_setreadonly(L, -1, 0);
-    lua_pushlightuserdata(L, window);
-    lua_setfield(L, -2, "__window_ptr");
-    lua_setreadonly(L, -1, 1);
+    LuauWindow::Push(L, gui->createWindow(windowDescriptor));
     return 1;
 }
 
 static int createButton(lua_State* L) {
     GuiModule* gui = getModuleInstance(L);
     ButtonDescriptor buttonDescriptor = getButtonDescriptor(L);
+    IWindow* parent = LuauWindow::Check(L, 2)->get();
 
-    luaL_checktype(L, 2, LUA_TTABLE);
-    lua_getfield(L, 2, "__window_ptr");
-    Window* parent = static_cast<Window*>(lua_touserdata(L, -1));
-    if (!parent) {
-        luaL_error(L, "Parent window not found creating button.");
-    }
-    lua_pop(L, 1);
-
-    Button* button = static_cast<Button*>(gui->createButton(buttonDescriptor, parent));
-    getButtonTable(L, button);
+    LuauButton::Push(L, gui->createButton(buttonDescriptor, parent));
     return 1;
 }
 
 static int createMenuBar(lua_State* L) {
     GuiModule* gui = getModuleInstance(L);
     MenuBarDescriptor menuBarDescriptor = getMenuBarDescriptor(L);
+    IWindow* parent = LuauWindow::Check(L, 2)->get();
 
-    luaL_checktype(L, 2, LUA_TTABLE);
-    lua_getfield(L, 2, "__window_ptr");
-    Window* parent = static_cast<Window*>(lua_touserdata(L, -1));
-    if (!parent) {
-        luaL_error(L, "Parent window not found creating menu bar.");
-    }
-    lua_pop(L, 1);
-
-    MenuBar* menuBar = static_cast<MenuBar*>(gui->createMenuBar(menuBarDescriptor, parent));
-    getMenuBarTable(L, menuBar);
+    LuauMenuBar::Push(L, gui->createMenuBar(menuBarDescriptor, parent));
     return 1;
 }
 
@@ -129,3 +109,5 @@ const LuauExport* GuiModule::getExports() const {
 }
 
 } // namespace Luwow::Gui
+
+LUWOW_REGISTER_MODULE(Luwow::Gui::GuiModule)

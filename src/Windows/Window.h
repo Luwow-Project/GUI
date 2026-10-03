@@ -27,6 +27,4 @@ private:
     HWND hWnd;
 };
 
-void getWindowTable(lua_State* L, Window* window);
-
 } // namespace Luwow::Gui

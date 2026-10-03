@@ -1,10 +1,10 @@
 #pragma once
 #include "IGuiModule.h"
-#include "Engine.h"
+#include "ILuauHost.h"
 
 namespace Luwow::Gui {
 
-using Engine = Luwow::Engine::Engine;
+using ILuauHost = Luwow::Engine::ILuauHost;
 
 class GuiModule : public IGuiModule {
 public:
@@ -14,15 +14,15 @@ public:
     const char* getModuleName() const override;
     const char* getModuleAlias() const override;
     const LuauExport* getExports() const override;
-    ILuauModule* initialize(Engine* engine) override;
+    ILuauModule* initialize(ILuauHost* host) override;
     IWindow* createWindow(const WindowDescriptor& descriptor) override;
     IButton* createButton(const ButtonDescriptor& descriptor, IWindow* parent) override;
     IMenuBar* createMenuBar(const MenuBarDescriptor& descriptor, IWindow* parent) override;
     static void MessagePump();
 
 private:
-    void setEngine(Engine* engine);
-    Engine* engine;
+    void setHost(ILuauHost* host);
+    ILuauHost* host;
 };
 
 } // namespace Luwow::Gui
