@@ -1,6 +1,7 @@
 #include <windows.h>
 #include "Button.h"
 #include "Window.h"
+#include "ILuauHost.h"
 #include <iostream>
 #include <stdexcept>
 #include "lua.h"
@@ -42,6 +43,7 @@ Button::~Button() {
 }
 
 void Button::onCommand() {
+    Luwow::Engine::StateLock lock(descriptor.host);
     lua_State* L = descriptor.L;
     // call the callback in Descriptor.OnPressedRef with pcall
     lua_getref(L, descriptor.OnPressedRef);

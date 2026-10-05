@@ -4,6 +4,10 @@
 #include <functional>
 #include "lua.h"
 
+namespace Luwow::Engine {
+class ILuauHost;
+}
+
 namespace Luwow::Gui {
 
 struct WindowDescriptor {
@@ -19,6 +23,7 @@ struct ButtonDescriptor {
     std::string Type = "";
     std::string Caption = "";
     lua_State* L = nullptr;           // Lua state for callback
+    Luwow::Engine::ILuauHost* host = nullptr; // Host whose state lock guards the callback
     int OnPressedRef = LUA_NOREF;     // Lua registry reference to callback function
     int Width = 0;
     int Height = 0;
@@ -41,6 +46,7 @@ struct MenuItemDescriptor {
     std::string Type = "";
     std::string Title = "";
     lua_State* L = nullptr;
+    Luwow::Engine::ILuauHost* host = nullptr;
     int OnSelectedRef = LUA_NOREF;
 };
 

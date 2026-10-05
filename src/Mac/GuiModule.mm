@@ -24,6 +24,15 @@ static GuiModule* getModuleInstance(lua_State* L) {
     return gui;
 }
 
+// Gets the module for a Luau call, which must come from the main thread
+static GuiModule* getMainThreadInstance(lua_State* L) {
+    GuiModule* gui = getModuleInstance(L);
+    if (!gui->isMainThread()) {
+        luaL_error(L, "gui can only be used from the main thread");
+    }
+    return gui;
+}
+
 GuiModule::GuiModule() : host(nullptr) {}
 
 ILuauModule* GuiModule::initialize(ILuauHost* host) {
@@ -33,26 +42,32 @@ ILuauModule* GuiModule::initialize(ILuauHost* host) {
     return gui;
 }
 
-void GuiModule::MessagePump() {
+
+void GuiModule::run() {
+    if (!createdWindow) return; // Without a window there's nothing to wait for, and the loop would never end
     @autoreleasepool {
         [NSApp activateIgnoringOtherApps:YES];
         [NSApp run];
     }
 }
 
+Luwow::Engine::RunMode GuiModule::getRunMode() const {
+    return LUWOW_MODULE_RUN_MODE;
+}
+
 void GuiModule::setHost(ILuauHost* host) {
     this->host = host;
+    mainThread = std::this_thread::get_id();
 
     @autoreleasepool {
         [NSApplication sharedApplication];
         [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
         [NSApp finishLaunching];
     }
-
-    host->setMessagePumpCallback(MessagePump);
 }
 
 IWindow* GuiModule::createWindow(const WindowDescriptor& descriptor) {
+    createdWindow = true;
     return new Window(descriptor);
 }
 
@@ -65,15 +80,16 @@ IMenuBar* GuiModule::createMenuBar(const MenuBarDescriptor& descriptor, IWindow*
 }
 
 static int createWindow(lua_State* L) {
-    GuiModule* gui = getModuleInstance(L);
+    GuiModule* gui = getMainThreadInstance(L);
     WindowDescriptor windowDescriptor = getWindowDescriptor(L);
     LuauWindow::Push(L, gui->createWindow(windowDescriptor));
     return 1;
 }
 
 static int createButton(lua_State* L) {
-    GuiModule* gui = getModuleInstance(L);
+    GuiModule* gui = getMainThreadInstance(L);
     ButtonDescriptor buttonDescriptor = getButtonDescriptor(L);
+    buttonDescriptor.host = gui->getHost();
     IWindow* parent = LuauWindow::Check(L, 2)->get();
 
     LuauButton::Push(L, gui->createButton(buttonDescriptor, parent));
@@ -81,8 +97,11 @@ static int createButton(lua_State* L) {
 }
 
 static int createMenuBar(lua_State* L) {
-    GuiModule* gui = getModuleInstance(L);
+    GuiModule* gui = getMainThreadInstance(L);
     MenuBarDescriptor menuBarDescriptor = getMenuBarDescriptor(L);
+    for (MenuDescriptor& menu : menuBarDescriptor.Menus) {
+        for (MenuItemDescriptor& item : menu.Items) item.host = gui->getHost();
+    }
     IWindow* parent = LuauWindow::Check(L, 2)->get();
 
     LuauMenuBar::Push(L, gui->createMenuBar(menuBarDescriptor, parent));

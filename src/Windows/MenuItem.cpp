@@ -1,5 +1,6 @@
 #include "MenuItem.h"
 #include "Window.h"
+#include "ILuauHost.h"
 #include <stdexcept>
 #include "lua.h"
 #include "lualib.h"
@@ -17,6 +18,7 @@ MenuItem::MenuItem(const MenuItemDescriptor& descriptor, IWindow* parent)
 }
 
 void MenuItem::onCommand() {
+    Luwow::Engine::StateLock lock(descriptor.host);
     lua_State* L = descriptor.L;
     lua_getref(L, descriptor.OnSelectedRef);
     lua_pcall(L, 0, 0, 0);

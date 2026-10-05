@@ -1,6 +1,7 @@
 if(WIN32)
     luwow_add_library(Luwow.Gui
         NAME gui
+        MODES SERIAL
         SOURCES
             Descriptors.cpp
             Descriptors.h
@@ -25,6 +26,7 @@ if(WIN32)
 elseif(APPLE)
     luwow_add_library(Luwow.Gui
         NAME gui
+        MODES SERIAL
         SOURCES
             Descriptors.cpp
             Descriptors.h

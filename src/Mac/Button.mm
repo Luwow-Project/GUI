@@ -2,6 +2,7 @@
 
 #include "Button.h"
 #include "Window.h"
+#include "ILuauHost.h"
 #include <stdexcept>
 #include "lua.h"
 #include "lualib.h"
@@ -69,6 +70,7 @@ Button::~Button() {
 }
 
 void Button::onCommand() {
+    Luwow::Engine::StateLock lock(descriptor.host);
     lua_State* L = descriptor.L;
     lua_getref(L, descriptor.OnPressedRef);
     lua_pcall(L, 0, 0, 0);
