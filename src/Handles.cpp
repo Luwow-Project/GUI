@@ -13,10 +13,16 @@ int LuauWindow::close(lua_State* L) {
     return 0;
 }
 
+int LuauWindow::getNativeHandle(lua_State* L) {
+    lua_pushlightuserdata(L, window->getNativeHandle());
+    return 1;
+}
+
 void LuauWindow::RegisterClass(lua_State* L) {
     Register(L, {
         { "show",  &LuauWindow::show },
-        { "close", &LuauWindow::close }
+        { "close", &LuauWindow::close },
+        { "getNativeHandle", &LuauWindow::getNativeHandle }
     }, {});
 }
 

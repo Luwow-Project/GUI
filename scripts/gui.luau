@@ -61,7 +61,15 @@ export type Window = {
 
 		@param Window The window object
 	]=]
-    close: (Window) -> ()
+    close: (Window) -> (),
+
+    --[=[
+		The platform's window, an HWND on Windows and an NSWindow on macOS, for other libraries that
+		draw into it, such as UDC.
+
+		@param Window The window object
+	]=]
+    getNativeHandle: (Window) -> any
 }
 
 export type Button = {}

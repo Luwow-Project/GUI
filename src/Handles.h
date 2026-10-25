@@ -16,6 +16,8 @@ public:
     int show(lua_State* L);
     // window:close()
     int close(lua_State* L);
+    // window:getNativeHandle(), the platform's window as a light userdata, for other libraries
+    int getNativeHandle(lua_State* L);
 
     IWindow* get() const { return window; }
     static void RegisterClass(lua_State* L);

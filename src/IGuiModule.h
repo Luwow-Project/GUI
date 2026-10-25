@@ -15,6 +15,7 @@ public:
     virtual ~IWindow() = default;
     virtual void show() = 0;
     virtual void close() = 0;
+    virtual void* getNativeHandle() const = 0; // The platform's window for other libraries to draw into
     virtual uint16_t registerCommandControl(ICommandControl* commandControl) = 0;
     virtual ICommandControl* getCommandControl(uint16_t id) const = 0;
 };
