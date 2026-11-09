@@ -23,6 +23,7 @@ if(WIN32)
         ${GUI_ROOT}/src
         ${GUI_ROOT}/src/Windows
     )
+    target_link_libraries(Luwow.Gui PRIVATE user32)
 elseif(APPLE)
     luwow_add_library(Luwow.Gui
         NAME gui
