@@ -42,7 +42,21 @@ export type MenuBarDescriptor = {
     Menus: { MenuDescriptor },
 }
 
-export type WindowDescriptors = WindowDescriptor | ButtonDescriptor | MenuBarDescriptor
+export type FileDialogFilter = {
+    Name: string,
+    Extensions: { string },
+}
+
+export type FileDialogDescriptor = {
+    Type: "FileDialog",
+    Mode: "OpenFile" | "OpenFiles" | "OpenFolder" | "SaveFile",
+    Title: string?,
+    InitialDirectory: string?,
+    DefaultFileName: string?,
+    Filters: { FileDialogFilter }?,
+}
+
+export type WindowDescriptors = WindowDescriptor | ButtonDescriptor | MenuBarDescriptor | FileDialogDescriptor
 
 --[=[
 	The types for each component object.
@@ -101,7 +115,16 @@ export type Gui = {
 		@param parent The parent Window object.
 		@return The new MenuBar object.
 	]=]
-    createMenuBar: (descriptor: MenuBarDescriptor, parent: Window) -> MenuBar
+    createMenuBar: (descriptor: MenuBarDescriptor, parent: Window) -> MenuBar,
+
+    --[=[
+		Shows a native file or folder picker dialog.
+
+		@param descriptor The file dialog descriptor that defines the picker mode and options.
+		@param parent An optional parent Window used as the dialog owner.
+		@return A list of selected paths, or nil if the dialog was cancelled.
+	]=]
+    showFileDialog: (descriptor: FileDialogDescriptor, parent: Window?) -> { string }?,
 }
 
 return table.freeze({} :: Gui)

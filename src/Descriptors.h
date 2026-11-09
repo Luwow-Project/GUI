@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 #include <functional>
 #include "lua.h"
 
@@ -9,6 +10,27 @@ class ILuauHost;
 }
 
 namespace Luwow::Gui {
+
+enum class FileDialogMode {
+    OpenFile,
+    OpenFiles,
+    OpenFolder,
+    SaveFile,
+};
+
+struct FileDialogFilter {
+    std::string Name;
+    std::vector<std::string> Extensions;
+};
+
+struct FileDialogDescriptor {
+    std::string Type = "";
+    FileDialogMode Mode = FileDialogMode::OpenFile;
+    std::string Title = "";
+    std::string InitialDirectory = "";
+    std::string DefaultFileName = "";
+    std::vector<FileDialogFilter> Filters;
+};
 
 struct WindowDescriptor {
     std::string Type = "";
@@ -68,5 +90,6 @@ TextBoxDescriptor getTextBoxDescriptor(lua_State* L);
 MenuItemDescriptor getMenuItemDescriptor(lua_State* L);
 MenuDescriptor getMenuDescriptor(lua_State* L);
 MenuBarDescriptor getMenuBarDescriptor(lua_State* L);
+FileDialogDescriptor getFileDialogDescriptor(lua_State* L);
 
 } // namespace Luwow::Gui
