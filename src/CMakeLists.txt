@@ -10,6 +10,8 @@ if(WIN32)
             Handles.h
             Windows/Button.cpp
             Windows/Button.h
+            Windows/FileDialog.cpp
+            Windows/FileDialog.h
             Windows/MenuBar.cpp
             Windows/MenuBar.h
             Windows/MenuItem.cpp
@@ -23,6 +25,7 @@ if(WIN32)
         ${GUI_ROOT}/src
         ${GUI_ROOT}/src/Windows
     )
+    target_link_libraries(Luwow.Gui PUBLIC user32 ole32 shell32)
 elseif(APPLE)
     luwow_add_library(Luwow.Gui
         NAME gui
@@ -35,6 +38,8 @@ elseif(APPLE)
             Handles.h
             Mac/Button.mm
             Mac/Button.h
+            Mac/FileDialog.mm
+            Mac/FileDialog.h
             Mac/MenuBar.mm
             Mac/MenuBar.h
             Mac/MenuItem.mm

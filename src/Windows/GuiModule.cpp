@@ -3,6 +3,7 @@
 #include "Window.h"
 #include "Button.h"
 #include "MenuBar.h"
+#include "FileDialog.h"
 #include "Handles.h"
 
 #include "lua.h"
@@ -123,6 +124,10 @@ IMenuBar* GuiModule::createMenuBar(const MenuBarDescriptor& descriptor, IWindow*
     return new MenuBar(descriptor, parent);
 }
 
+std::vector<std::string> GuiModule::showFileDialog(const FileDialogDescriptor& descriptor, IWindow* parent) {
+    return showNativeFileDialog(descriptor, parent);
+}
+
 static int createWindow(lua_State* L) {
     GuiModule* gui = getMainThreadInstance(L);
     WindowDescriptor windowDescriptor = getWindowDescriptor(L);
@@ -152,6 +157,28 @@ static int createMenuBar(lua_State* L) {
     return 1;
 }
 
+static int showFileDialog(lua_State* L) {
+    GuiModule* gui = getMainThreadInstance(L);
+    FileDialogDescriptor fileDialogDescriptor = getFileDialogDescriptor(L);
+    IWindow* parent = nullptr;
+    if (!lua_isnoneornil(L, 2)) {
+        parent = LuauWindow::Check(L, 2)->get();
+    }
+
+    std::vector<std::string> paths = gui->showFileDialog(fileDialogDescriptor, parent);
+    if (paths.empty()) {
+        lua_pushnil(L);
+        return 1;
+    }
+
+    lua_createtable(L, (int)paths.size(), 0);
+    for (size_t i = 0; i < paths.size(); ++i) {
+        lua_pushlstring(L, paths[i].data(), paths[i].size());
+        lua_rawseti(L, -2, (int)i + 1);
+    }
+    return 1;
+}
+
 const char* GuiModule::getModuleName() const {
     return "gui";
 }
@@ -164,6 +191,7 @@ static LuauExport exports[] = {
     { "createWindow", createWindow },
     { "createButton", createButton },
     { "createMenuBar", createMenuBar },
+    { "showFileDialog", showFileDialog },
     { nullptr, nullptr }
 };
 

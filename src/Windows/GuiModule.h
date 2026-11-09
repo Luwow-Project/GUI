@@ -21,6 +21,7 @@ public:
     IWindow* createWindow(const WindowDescriptor& descriptor) override;
     IButton* createButton(const ButtonDescriptor& descriptor, IWindow* parent) override;
     IMenuBar* createMenuBar(const MenuBarDescriptor& descriptor, IWindow* parent) override;
+    std::vector<std::string> showFileDialog(const FileDialogDescriptor& descriptor, IWindow* parent) override;
     
     RunMode getRunMode() const override;
     ILuauHost* getHost() const { return host; }

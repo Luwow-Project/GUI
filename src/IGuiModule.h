@@ -40,8 +40,7 @@ class IButton : public ICommandControl {
 public:
     virtual ~IButton() = default;
 };
-    
-    
+
 // Interface for the GUI API consistent across platforms
 class IGuiModule : public Luwow::Engine::ILuauModule {
 public:
@@ -49,6 +48,7 @@ public:
     virtual IWindow* createWindow(const WindowDescriptor& descriptor) = 0;
     virtual IButton* createButton(const ButtonDescriptor& descriptor, IWindow* parent) = 0;
     virtual IMenuBar* createMenuBar(const MenuBarDescriptor& descriptor, IWindow* parent) = 0;
+    virtual std::vector<std::string> showFileDialog(const FileDialogDescriptor& descriptor, IWindow* parent) = 0;
 };
 
 }
