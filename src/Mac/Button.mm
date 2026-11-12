@@ -2,10 +2,7 @@
 
 #include "Button.h"
 #include "Window.h"
-#include "ILuauHost.h"
 #include <stdexcept>
-#include "lua.h"
-#include "lualib.h"
 
 @interface LuwowButtonTarget : NSObject
 @property (nonatomic, assign) Luwow::Gui::Button* cppButton;
@@ -22,15 +19,13 @@
 
 namespace Luwow::Gui {
 
-Button::Button(const ButtonDescriptor& descriptor, IWindow* parent) : descriptor(descriptor) {
-    Window* parentWindow = dynamic_cast<Window*>(parent);
-    if (!parentWindow) {
+Button::Button(const ButtonDescriptor& descriptor, IWindow* parent) {
+    window = dynamic_cast<Window*>(parent);
+    if (!window) {
         throw std::runtime_error("Parent window is not a Window");
     }
 
-    (void)parentWindow->registerCommandControl(this);
-
-    NSView* contentView = (__bridge NSView*)parentWindow->getNativeContentView();
+    NSView* contentView = (__bridge NSView*)window->getNativeContentView();
     if (!contentView) {
         throw std::runtime_error("Parent window has no content view");
     }
@@ -56,10 +51,15 @@ Button::Button(const ButtonDescriptor& descriptor, IWindow* parent) : descriptor
 
 Button::~Button() {
     @autoreleasepool {
+        if (nativeButton) {
+            NSButton* button = (__bridge NSButton*)nativeButton;
+            [button setTarget:nil];
+            [button removeFromSuperview];
+        }
         if (nativeTarget) {
-            id target = (__bridge_transfer id)nativeTarget;
+            LuwowButtonTarget* target = (__bridge_transfer LuwowButtonTarget*)nativeTarget;
             nativeTarget = nullptr;
-            (void)target;
+            target.cppButton = nullptr;
         }
         if (nativeButton) {
             id button = (__bridge_transfer id)nativeButton;
@@ -69,11 +69,14 @@ Button::~Button() {
     }
 }
 
-void Button::onCommand() {
-    Luwow::Engine::StateLock lock(descriptor.host);
-    lua_State* L = descriptor.L;
-    lua_getref(L, descriptor.OnPressedRef);
-    lua_pcall(L, 0, 0, 0);
+void Button::setCaption(const std::string& caption) {
+    NSButton* button = (__bridge NSButton*)nativeButton;
+    [button setTitle:[NSString stringWithUTF8String:caption.c_str()]];
+}
+
+void Button::setBounds(int left, int top, int width, int height) {
+    NSButton* button = (__bridge NSButton*)nativeButton;
+    [button setFrame:NSMakeRect(left, top, width, height)];
 }
 
 } // namespace Luwow::Gui

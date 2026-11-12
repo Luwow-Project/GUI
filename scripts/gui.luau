@@ -1,130 +1,23 @@
--- This is the type system for the GUI API as it exists in C++ code.
+export type Connection = GuiConnection
+export type Signal<T...> = GuiSignal<T...>
+export type Vector = GuiVector
 
---[=[
-	The base common window descriptor for UI components.
-]=]
-export type CommonWindowDescriptor = {
-    Left: number?,
-    Top: number?,
-    Width: number?,
-    Height: number?
-}
+export type WindowDescriptor = GuiWindowDescriptor
+export type ButtonDescriptor = GuiButtonDescriptor
+export type MenuBarDescriptor = GuiMenuBarDescriptor
+export type MenuDescriptor = GuiMenuDescriptor
+export type MenuItemDescriptor = GuiMenuItemDescriptor
+export type Descriptor = GuiDescriptor
+export type FileDialogFilter = GuiFileDialogFilter
+export type FileDialogDescriptor = GuiFileDialogDescriptor
 
---[=[
-	The descriptor types for each component.
-]=]
+export type Node = GuiNode
+export type Window = GuiWindow
+export type Button = GuiButton
+export type MenuBar = GuiMenuBar
+export type Menu = GuiMenu
+export type MenuItem = GuiMenuItem
+export type WindowOf<D> = GuiWindowOf<D>
+export type Gui = GuiLibrary
 
-export type WindowDescriptor = CommonWindowDescriptor & {
-    Type: "Window",
-    Title: string,
-}
-
-export type ButtonDescriptor = CommonWindowDescriptor & {
-    Type: "Button",
-    Caption: string,
-    OnPressed: () -> (),
-}
-
-export type MenuItemDescriptor = {
-    Type: "MenuItem",
-    Title: string,
-    OnSelected: () -> (),
-}
-
-export type MenuDescriptor = {
-    Type: "Menu",
-    Title: string,
-    Items: { MenuItemDescriptor },
-}
-
-export type MenuBarDescriptor = {
-    Type: "MenuBar",
-    Menus: { MenuDescriptor },
-}
-
-export type FileDialogFilter = {
-    Name: string,
-    Extensions: { string },
-}
-
-export type FileDialogDescriptor = {
-    Type: "FileDialog",
-    Mode: "OpenFile" | "OpenFiles" | "OpenFolder" | "SaveFile",
-    Title: string?,
-    InitialDirectory: string?,
-    DefaultFileName: string?,
-    Filters: { FileDialogFilter }?,
-}
-
-export type WindowDescriptors = WindowDescriptor | ButtonDescriptor | MenuBarDescriptor | FileDialogDescriptor
-
---[=[
-	The types for each component object.
-]=]
-
-export type Window = {
-    --[=[
-		Shows the window.
-
-		@param Window The window object
-	]=]
-    show: (Window) -> (),
-
-    --[=[
-		Closes the window.
-
-		@param Window The window object
-	]=]
-    close: (Window) -> (),
-
-    --[=[
-		The platform's window, an HWND on Windows, an NSWindow on macOS, and a GtkWindow on Linux,
-		for other libraries that draw into it, such as UDC.
-
-		@param Window The window object
-	]=]
-    getNativeHandle: (Window) -> any
-}
-
-export type Button = {}
-
-export type MenuBar = {}
-
-export type Gui = {
-    --[=[
-		Creates a new Window with the given descriptor.
-
-		@param descriptor The window descriptor that defines the properties of the window.
-		@return The new Window object.
-	]=]
-    createWindow: (descriptor: WindowDescriptor) -> Window,
-
-    --[=[
-		Creates a new Button with the given descriptor.
-
-		@param descriptor The button descriptor that defines the properties of the button.
-		@param parent The parent Window object.
-		@return The new Button object.
-	]=]
-    createButton: (descriptor: ButtonDescriptor, parent: Window) -> Button,
-    
-    --[=[
-		Creates a new MenuBar with the given descriptor.
-
-		@param descriptor The menu bar descriptor that defines the properties of the menu bar.
-		@param parent The parent Window object.
-		@return The new MenuBar object.
-	]=]
-    createMenuBar: (descriptor: MenuBarDescriptor, parent: Window) -> MenuBar,
-
-    --[=[
-		Shows a native file or folder picker dialog.
-
-		@param descriptor The file dialog descriptor that defines the picker mode and options.
-		@param parent An optional parent Window used as the dialog owner.
-		@return A list of selected paths, or nil if the dialog was cancelled.
-	]=]
-    showFileDialog: (descriptor: FileDialogDescriptor, parent: Window?) -> { string }?,
-}
-
-return table.freeze({} :: Gui)
+return table.freeze({} :: GuiLibrary)

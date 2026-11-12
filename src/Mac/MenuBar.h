@@ -1,20 +1,18 @@
 #pragma once
 
 #include "IGuiModule.h"
-#include "MenuItem.h"
-#include <memory>
-#include <vector>
 
 namespace Luwow::Gui {
 
 class MenuBar : public IMenuBar {
 public:
-    MenuBar(const MenuBarDescriptor& descriptor, IWindow* parent);
+    explicit MenuBar(IWindow* parent);
     ~MenuBar() override;
+
+    void insertMenu(size_t index, IMenu* menu) override;
 
 private:
     void* nativeMainMenu = nullptr;
-    std::vector<std::unique_ptr<MenuItem>> items;
 };
 
 } // namespace Luwow::Gui

@@ -2,12 +2,8 @@
 
 #include <string>
 #include <vector>
-#include <functional>
-#include "lua.h"
 
-namespace Luwow::Engine {
-class ILuauHost;
-}
+struct lua_State;
 
 namespace Luwow::Gui {
 
@@ -33,7 +29,6 @@ struct FileDialogDescriptor {
 };
 
 struct WindowDescriptor {
-    std::string Type = "";
     std::string Title = "";
     int Width = 0;
     int Height = 0;
@@ -42,54 +37,35 @@ struct WindowDescriptor {
 };
 
 struct ButtonDescriptor {
-    std::string Type = "";
     std::string Caption = "";
-    lua_State* L = nullptr;           // Lua state for callback
-    Luwow::Engine::ILuauHost* host = nullptr; // Host whose state lock guards the callback
-    int OnPressedRef = LUA_NOREF;     // Lua registry reference to callback function
     int Width = 0;
     int Height = 0;
     int Left = 0;
     int Top = 0;
 };
 
-struct TextBoxDescriptor {
-    std::string Type = "";
-    std::string Text = "";
-    std::string Font = "";
-    bool MultiLineMode = false;
-    int Width = 0;
-    int Height = 0;
-    int Left = 0;
-    int Top = 0;
+struct MenuBarDescriptor {};
+
+struct MenuDescriptor {
+    std::string Title = "";
 };
 
 struct MenuItemDescriptor {
-    std::string Type = "";
     std::string Title = "";
-    lua_State* L = nullptr;
-    Luwow::Engine::ILuauHost* host = nullptr;
-    int OnSelectedRef = LUA_NOREF;
 };
 
-struct MenuDescriptor {
-    std::string Type = "";
-    std::string Title = "";
-    std::vector<MenuItemDescriptor> Items;
-};
+// The two numbers of the {x, y} or {width, height} table at index, false if it isn't one
+bool readPair(lua_State* L, int index, int& first, int& second);
+// Pushes a new {first, second} table
+void pushPair(lua_State* L, int first, int second);
 
-struct MenuBarDescriptor {
-    std::string Type = "";
-    std::vector<MenuDescriptor> Menus;
-};
+// The properties of the descriptor table at index
+WindowDescriptor readWindowDescriptor(lua_State* L, int index);
+ButtonDescriptor readButtonDescriptor(lua_State* L, int index);
+MenuDescriptor readMenuDescriptor(lua_State* L, int index);
+MenuItemDescriptor readMenuItemDescriptor(lua_State* L, int index);
 
-// Methods for getting the descriptors from their respective Luau tables.
-WindowDescriptor getWindowDescriptor(lua_State* L);
-ButtonDescriptor getButtonDescriptor(lua_State* L);
-TextBoxDescriptor getTextBoxDescriptor(lua_State* L);
-MenuItemDescriptor getMenuItemDescriptor(lua_State* L);
-MenuDescriptor getMenuDescriptor(lua_State* L);
-MenuBarDescriptor getMenuBarDescriptor(lua_State* L);
-FileDialogDescriptor getFileDialogDescriptor(lua_State* L);
+// The file dialog descriptor, the table at index
+FileDialogDescriptor getFileDialogDescriptor(lua_State* L, int index);
 
 } // namespace Luwow::Gui

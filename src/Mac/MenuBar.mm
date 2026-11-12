@@ -1,31 +1,14 @@
 #import <Cocoa/Cocoa.h>
 
 #include "MenuBar.h"
+#include "Menu.h"
 #include "Window.h"
 #include <stdexcept>
-#include <string>
 
 namespace Luwow::Gui {
 
-// Strip Windows-style mnemonics ("&File" → "File", "&&" → "&").
-static std::string stripMnemonic(const std::string& title) {
-    std::string result;
-    result.reserve(title.size());
-    for (size_t i = 0; i < title.size(); ++i) {
-        if (title[i] == '&' && i + 1 < title.size()) {
-            result.push_back(title[++i]);
-            continue;
-        }
-        if (title[i] != '&') {
-            result.push_back(title[i]);
-        }
-    }
-    return result;
-}
-
-MenuBar::MenuBar(const MenuBarDescriptor& descriptor, IWindow* parent) {
-    Window* parentWindow = dynamic_cast<Window*>(parent);
-    if (!parentWindow) {
+MenuBar::MenuBar(IWindow* parent) {
+    if (!dynamic_cast<Window*>(parent)) {
         throw std::runtime_error("Parent window is not a Window");
     }
 
@@ -45,23 +28,6 @@ MenuBar::MenuBar(const MenuBarDescriptor& descriptor, IWindow* parent) {
         [appMenuItem setSubmenu:appMenu];
         [mainMenu addItem:appMenuItem];
 
-        for (const MenuDescriptor& menuDescriptor : descriptor.Menus) {
-            std::string menuTitle = stripMnemonic(menuDescriptor.Title);
-            NSMenu* submenu = [[NSMenu alloc] initWithTitle:[NSString stringWithUTF8String:menuTitle.c_str()]];
-
-            for (const MenuItemDescriptor& itemDescriptor : menuDescriptor.Items) {
-                auto item = std::make_unique<MenuItem>(itemDescriptor, parentWindow);
-                NSMenuItem* nativeItem = (__bridge NSMenuItem*)item->getNativeMenuItem();
-                [submenu addItem:nativeItem];
-                items.push_back(std::move(item));
-            }
-
-            NSMenuItem* topItem = [[NSMenuItem alloc] init];
-            [topItem setTitle:[NSString stringWithUTF8String:menuTitle.c_str()]];
-            [topItem setSubmenu:submenu];
-            [mainMenu addItem:topItem];
-        }
-
         [NSApp setMainMenu:mainMenu];
         nativeMainMenu = (__bridge_retained void*)mainMenu;
     }
@@ -69,9 +35,6 @@ MenuBar::MenuBar(const MenuBarDescriptor& descriptor, IWindow* parent) {
 
 MenuBar::~MenuBar() {
     @autoreleasepool {
-        // Drop C++ item ownership first while the NSMenu still retains the
-        // NSMenuItems, then release the menu tree.
-        items.clear();
         if (nativeMainMenu) {
             if ([NSApp mainMenu] == (__bridge NSMenu*)nativeMainMenu) {
                 [NSApp setMainMenu:nil];
@@ -81,6 +44,13 @@ MenuBar::~MenuBar() {
             (void)menu;
         }
     }
+}
+
+// The application menu comes first, so the bar's menus start after it
+void MenuBar::insertMenu(size_t index, IMenu* menu) {
+    NSMenu* mainMenu = (__bridge NSMenu*)nativeMainMenu;
+    NSMenuItem* topItem = (__bridge NSMenuItem*)static_cast<Menu*>(menu)->getNativeTopItem();
+    [mainMenu insertItem:topItem atIndex:(NSInteger)index + 1];
 }
 
 } // namespace Luwow::Gui

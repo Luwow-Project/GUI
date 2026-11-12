@@ -22,9 +22,28 @@ Gtk::Main*& gtkMain() {
     return main;
 }
 
-bool& quitRequested() {
-    static bool requested = false;
-    return requested;
+int& shownWindows() {
+    static int count = 0;
+    return count;
+}
+
+// Ends the loop, including when a modal file dialog runs its own loop inside it. quit() ends only the
+// innermost loop, so an idle callback ends each outer one in turn.
+void quitLoops() {
+    if (Gtk::Main::level() == 0) {
+        return;
+    }
+    Gtk::Main::quit();
+    if (Gtk::Main::level() > 1) {
+        Glib::signal_idle().connect([]() -> bool {
+            const guint level = Gtk::Main::level();
+            if (level == 0) {
+                return false;
+            }
+            Gtk::Main::quit();
+            return level > 1;
+        });
+    }
 }
 
 } // namespace
@@ -47,32 +66,19 @@ void ensureGtkInitialized() {
     gtkMain() = new Gtk::Main(argc, argv);
 }
 
-void runGtkLoop() {
-    if (quitRequested()) {
-        return;
-    }
-    Gtk::Main::run();
+void windowShown() {
+    ++shownWindows();
 }
 
-void requestGtkQuit() {
-    const bool alreadyRequested = quitRequested();
-    quitRequested() = true;
-
-    // quit() ends only the innermost loop. A file dialog runs its own loop, so
-    // an idle callback then ends the outer GuiModule::run loop as well.
-    const guint level = Gtk::Main::level();
-    if (level == 0) {
-        return;
+void windowClosed() {
+    if (--shownWindows() == 0) {
+        quitLoops();
     }
+}
 
-    Gtk::Main::quit();
-    if (!alreadyRequested && level > 1) {
-        Glib::signal_idle().connect([]() -> bool {
-            if (Gtk::Main::level() > 0) {
-                Gtk::Main::quit();
-            }
-            return false;
-        });
+void runGtkLoop() {
+    if (shownWindows() > 0) {
+        Gtk::Main::run();
     }
 }
 

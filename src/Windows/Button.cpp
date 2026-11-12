@@ -1,53 +1,50 @@
 #include <windows.h>
 #include "Button.h"
 #include "Window.h"
-#include "ILuauHost.h"
-#include <iostream>
 #include <stdexcept>
-#include "lua.h"
-#include "lualib.h"
 
 namespace Luwow::Gui {
 
-Button::Button(const ButtonDescriptor& descriptor, IWindow* parent) : descriptor(descriptor), hButton(nullptr) {
-    Window* parentWindow = dynamic_cast<Window*>(parent);
-    if (!parentWindow) {
+Button::Button(const ButtonDescriptor& descriptor, IWindow* parent) {
+    window = dynamic_cast<Window*>(parent);
+    if (!window) {
         throw std::runtime_error("Parent window is not a Window");
     }
 
-    uint16_t id = parentWindow->registerCommandControl(this);
+    id = window->registerCommandControl(this);
 
-    HWND hParent = parentWindow->getHWND();
+    HWND hParent = window->getHWND();
     hButton = CreateWindowExA(
         0,
-        "BUTTON",  // Predefined class; Unicode assumed 
-        descriptor.Caption.c_str(),      // Button text 
-        WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,  // Styles 
+        "BUTTON",
+        descriptor.Caption.c_str(),
+        WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
         descriptor.Left,
         descriptor.Top,
         descriptor.Width,
         descriptor.Height,
         hParent,
-        (HMENU) id,
+        (HMENU)(UINT_PTR)id,
         (HINSTANCE)GetWindowLongPtr(hParent, GWLP_HINSTANCE),
         NULL
     );
-    SetWindowLongPtr(hButton, GWLP_USERDATA, (LONG_PTR)this);
+    if (!hButton) {
+        window->unregisterCommandControl(id);
+        throw std::runtime_error("Failed to create button");
+    }
 }
 
 Button::~Button() {
-    // // Clean up the Lua callback reference
-    // if (descriptor.OnPressedRef != LUA_NOREF && descriptor.L != nullptr) {
-    //     lua_unref(descriptor.L, LUA_REGISTRYINDEX);
-    // }
+    window->unregisterCommandControl(id);
+    if (window->isOpen()) DestroyWindow(hButton);
 }
 
-void Button::onCommand() {
-    Luwow::Engine::StateLock lock(descriptor.host);
-    lua_State* L = descriptor.L;
-    // call the callback in Descriptor.OnPressedRef with pcall
-    lua_getref(L, descriptor.OnPressedRef);
-    lua_pcall(L, 0, 0, 0);
+void Button::setCaption(const std::string& caption) {
+    if (window->isOpen()) SetWindowTextA(hButton, caption.c_str());
+}
+
+void Button::setBounds(int left, int top, int width, int height) {
+    if (window->isOpen()) MoveWindow(hButton, left, top, width, height, TRUE);
 }
 
 } // namespace Luwow::Gui

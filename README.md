@@ -2,7 +2,7 @@
 Cross-platform GUI library for Luwow-Project
 
 This repository is not stand-alone. You must build it externally from within another
-repository like https://github.com/Luwow-Project/Release
+repository.
 
 ## Project Overview
 

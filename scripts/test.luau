@@ -3,11 +3,10 @@ local gui = require("@Luwow/gui")
 local window = gui.createWindow({
   Type = "Window" :: "Window",
   Title = "Luwow Created Window",
-  Width = 400,
-  Height = 300,
+  Size = { 400, 300 },
 })
 
-local _menuBar = gui.createMenuBar({
+local _menuBar = window:add({
   Type = "MenuBar" :: "MenuBar",
   Menus = {
     {
@@ -111,20 +110,18 @@ local _menuBar = gui.createMenuBar({
       },
     },
   },
-}, window)
+})
 
 local numPresses = 0
-local _button = gui.createButton({
+local _button = window:add({
   Type = "Button" :: "Button",
   Caption = "Click me",
   OnPressed = function()
     numPresses += 1
     print("Button pressed " .. numPresses .. " times")
   end,
-  Width = 100,
-  Height = 30,
-  Left = 40,
-  Top = 40,
-}, window)
+  Size = { 100, 30 },
+  Position = { 40, 40 },
+})
 
 window:show()

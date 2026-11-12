@@ -7,15 +7,18 @@
 
 namespace Luwow::Gui {
 
+class Window;
+
 class Button : public IButton {
 public:
     Button(const ButtonDescriptor& descriptor, IWindow* parent);
     ~Button() override;
 
-    void onCommand() override;
+    void setCaption(const std::string& caption) override;
+    void setBounds(int left, int top, int width, int height) override;
 
 private:
-    ButtonDescriptor descriptor;
+    Window* window = nullptr;
     Gtk::Button* button = nullptr;
     sigc::connection clicked;
 };

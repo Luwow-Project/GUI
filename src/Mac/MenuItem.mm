@@ -1,12 +1,8 @@
 #import <Cocoa/Cocoa.h>
 
 #include "MenuItem.h"
-#include "Window.h"
-#include "ILuauHost.h"
-#include <stdexcept>
+#include "Mnemonic.h"
 #include <string>
-#include "lua.h"
-#include "lualib.h"
 
 @interface LuwowMenuItemTarget : NSObject
 @property (nonatomic, assign) Luwow::Gui::MenuItem* cppMenuItem;
@@ -23,31 +19,8 @@
 
 namespace Luwow::Gui {
 
-// Strip Windows-style mnemonics ("&File" → "File", "&&" → "&").
-static std::string stripMnemonic(const std::string& title) {
-    std::string result;
-    result.reserve(title.size());
-    for (size_t i = 0; i < title.size(); ++i) {
-        if (title[i] == '&' && i + 1 < title.size()) {
-            result.push_back(title[++i]);
-            continue;
-        }
-        if (title[i] != '&') {
-            result.push_back(title[i]);
-        }
-    }
-    return result;
-}
-
-MenuItem::MenuItem(const MenuItemDescriptor& descriptor, IWindow* parent)
-    : descriptor(descriptor) {
-    Window* parentWindow = dynamic_cast<Window*>(parent);
-    if (!parentWindow) {
-        throw std::runtime_error("Parent window is not a Window");
-    }
-
-    (void)parentWindow->registerCommandControl(this);
-
+MenuItem::MenuItem(const MenuItemDescriptor& descriptor, IWindow* parent) {
+    (void)parent;
     @autoreleasepool {
         std::string title = stripMnemonic(descriptor.Title);
         NSMenuItem* item = [[NSMenuItem alloc]
@@ -70,6 +43,9 @@ MenuItem::~MenuItem() {
             NSMenuItem* item = (__bridge NSMenuItem*)nativeMenuItem;
             [item setTarget:nil];
             [item setAction:nil];
+            if ([item menu]) {
+                [[item menu] removeItem:item];
+            }
         }
         if (nativeTarget) {
             LuwowMenuItemTarget* target = (__bridge_transfer LuwowMenuItemTarget*)nativeTarget;
@@ -84,11 +60,9 @@ MenuItem::~MenuItem() {
     }
 }
 
-void MenuItem::onCommand() {
-    Luwow::Engine::StateLock lock(descriptor.host);
-    lua_State* L = descriptor.L;
-    lua_getref(L, descriptor.OnSelectedRef);
-    lua_pcall(L, 0, 0, 0);
+void MenuItem::setTitle(const std::string& title) {
+    NSMenuItem* item = (__bridge NSMenuItem*)nativeMenuItem;
+    [item setTitle:[NSString stringWithUTF8String:stripMnemonic(title).c_str()]];
 }
 
 } // namespace Luwow::Gui

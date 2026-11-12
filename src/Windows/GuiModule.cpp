@@ -3,14 +3,18 @@
 #include "Window.h"
 #include "Button.h"
 #include "MenuBar.h"
+#include "Menu.h"
+#include "MenuItem.h"
 #include "FileDialog.h"
-#include "Handles.h"
+#include "Nodes.h"
+#include "MainThreadCall.h"
 
 #include "lua.h"
 #include "lualib.h"
-#include <iostream>
-#include <vector>
+#include <stdexcept>
 #include <string>
+#include <memory>
+#include <vector>
 #include <windows.h>
 
 namespace Luwow::Gui {
@@ -26,22 +30,41 @@ static GuiModule* getModuleInstance(lua_State* L) {
     return gui;
 }
 
-// Gets the module for a Luau call, which must come from the main thread
-static GuiModule* getMainThreadInstance(lua_State* L) {
-    GuiModule* gui = getModuleInstance(L);
-    if (!gui->isMainThread()) {
-        luaL_error(L, "gui can only be used from the main thread");
-    }
-    return gui;
-}
-
 GuiModule::GuiModule() : host(nullptr) {}
 
 ILuauModule* GuiModule::initialize(ILuauHost* host) {
     GuiModule* gui = new GuiModule();
     gui->setHost(host);
-    registerHandles(host->getMainState());
+    registerNodes(host->getMainState(), host, gui);
     return gui;
+}
+
+// The main thread's hidden window, which other threads post their gui calls to
+constexpr UINT WM_LUWOW_GUI_CALL = WM_APP + 0x4F;
+static HWND dispatcherWindow = NULL;
+
+static LRESULT CALLBACK DispatcherProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
+    if (message == WM_LUWOW_GUI_CALL) {
+        auto* call = reinterpret_cast<std::shared_ptr<MainThreadCall>*>(lParam);
+        (*call)->run();
+        delete call;
+        return 0;
+    }
+    return DefWindowProc(hWnd, message, wParam, lParam);
+}
+
+// The windows shown and not yet closed. A window that's never shown doesn't keep the loop running.
+static int shownWindows = 0;
+// A quit posted before the loop runs would end it as soon as it starts, so the last window closing
+// before then posts none
+static bool loopRunning = false;
+
+void windowShown() {
+    ++shownWindows;
+}
+
+void windowClosed() {
+    if (--shownWindows == 0 && loopRunning) PostQuitMessage(0);
 }
 
 static Window* GetWindow(HWND hWnd) {
@@ -52,23 +75,23 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
     switch (message) {
         case WM_DESTROY:
         {
-            // If all windows opened are closed
-            Window* gui = GetWindow(hWnd);
-            if (!gui) {
-                throw std::runtime_error("Window not found");
-            }
-            PostQuitMessage(0);
+            if (Window* window = GetWindow(hWnd)) window->destroyed();
+            break;
+        }
+        case WM_MOVE:
+        case WM_SIZE:
+        {
+            Window* window = GetWindow(hWnd);
+            if (window && !IsIconic(hWnd)) window->boundsChanged();
             break;
         }
         case WM_COMMAND:
         {
-            Window* gui = GetWindow(hWnd);
-            if (!gui) {
-                throw std::runtime_error("Window not found");
-            }
+            Window* window = GetWindow(hWnd);
+            if (!window) break;
+            // A control removed since the message was posted is no longer there
             uint16_t commandId = LOWORD(wParam);
-            ICommandControl* commandControl = gui->getCommandControl(commandId);
-            if (commandControl) {
+            if (ICommandControl* commandControl = window->getCommandControl(commandId)) {
                 commandControl->onCommand();
             }
             break;
@@ -79,12 +102,36 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 
 
 void GuiModule::run() {
-    if (!createdWindow) return; // Without a window there's nothing to wait for, and the loop would never end
+    // Without a shown window there's nothing to wait for, and the loop would never end
+    if (shownWindows == 0) {
+        loopEnded = true;
+        return;
+    }
+    loopRunning = true;
     MSG msg = {};
     while (GetMessage(&msg, NULL, 0, 0) > 0) {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
+    loopRunning = false;
+    loopEnded = true;
+}
+
+bool GuiModule::runOnMainThread(const std::function<void()>& work) {
+    if (isMainThread()) {
+        work();
+        return true;
+    }
+    if (!dispatcherWindow || loopEnded) return false;
+
+    auto call = std::make_shared<MainThreadCall>(work);
+    auto* message = new std::shared_ptr<MainThreadCall>(call);
+    if (!PostMessage(dispatcherWindow, WM_LUWOW_GUI_CALL, 0, reinterpret_cast<LPARAM>(message))) {
+        delete message;
+        return false;
+    }
+    Luwow::Engine::StateRelease release(host);
+    return call->wait(loopEnded);
 }
 
 Luwow::Engine::RunMode GuiModule::getRunMode() const {
@@ -109,74 +156,55 @@ void GuiModule::setHost(ILuauHost* host) {
     wcex.lpszClassName = "LuwowWindow";
     wcex.hIconSm = LoadIcon(NULL, IDI_APPLICATION);
     RegisterClassExA(&wcex);
+
+    WNDCLASSEXA dispatcher = {};
+    dispatcher.cbSize = sizeof(WNDCLASSEXA);
+    dispatcher.lpfnWndProc = DispatcherProc;
+    dispatcher.hInstance = GetModuleHandle(NULL);
+    dispatcher.lpszClassName = "LuwowGuiDispatcher";
+    RegisterClassExA(&dispatcher);
+    dispatcherWindow = CreateWindowExA(0, "LuwowGuiDispatcher", "", 0, 0, 0, 0, 0, HWND_MESSAGE, NULL, GetModuleHandle(NULL), NULL);
 }
 
 IWindow* GuiModule::createWindow(const WindowDescriptor& descriptor) {
-    createdWindow = true;
     return new Window(descriptor);
 }
 
-IButton* GuiModule::createButton(const ButtonDescriptor& descriptor, IWindow* parent) {
-    return new Button(descriptor, parent);
+IButton* GuiModule::createButton(const ButtonDescriptor& descriptor, IWindow* window) {
+    return new Button(descriptor, window);
 }
 
-IMenuBar* GuiModule::createMenuBar(const MenuBarDescriptor& descriptor, IWindow* parent) {
-    return new MenuBar(descriptor, parent);
+IMenuBar* GuiModule::createMenuBar(IWindow* window) {
+    return new MenuBar(window);
+}
+
+IMenu* GuiModule::createMenu(const MenuDescriptor& descriptor) {
+    return new Menu(descriptor);
+}
+
+IMenuItem* GuiModule::createMenuItem(const MenuItemDescriptor& descriptor, IWindow* window) {
+    return new MenuItem(descriptor, window);
 }
 
 std::vector<std::string> GuiModule::showFileDialog(const FileDialogDescriptor& descriptor, IWindow* parent) {
     return showNativeFileDialog(descriptor, parent);
 }
 
+static int createWindowNow(lua_State* L) {
+    return Luwow::Gui::createWindow(L, getModuleInstance(L));
+}
+
+static int showFileDialogNow(lua_State* L) {
+    return Luwow::Gui::showFileDialog(L, getModuleInstance(L));
+}
+
+// Called from another thread, the functions run on the main thread while the caller waits
 static int createWindow(lua_State* L) {
-    GuiModule* gui = getMainThreadInstance(L);
-    WindowDescriptor windowDescriptor = getWindowDescriptor(L);
-    LuauWindow::Push(L, gui->createWindow(windowDescriptor));
-    return 1;
-}
-
-static int createButton(lua_State* L) {
-    GuiModule* gui = getMainThreadInstance(L);
-    ButtonDescriptor buttonDescriptor = getButtonDescriptor(L);
-    buttonDescriptor.host = gui->getHost();
-    IWindow* parent = LuauWindow::Check(L, 2)->get();
-
-    LuauButton::Push(L, gui->createButton(buttonDescriptor, parent));
-    return 1;
-}
-
-static int createMenuBar(lua_State* L) {
-    GuiModule* gui = getMainThreadInstance(L);
-    MenuBarDescriptor menuBarDescriptor = getMenuBarDescriptor(L);
-    for (MenuDescriptor& menu : menuBarDescriptor.Menus) {
-        for (MenuItemDescriptor& item : menu.Items) item.host = gui->getHost();
-    }
-    IWindow* parent = LuauWindow::Check(L, 2)->get();
-
-    LuauMenuBar::Push(L, gui->createMenuBar(menuBarDescriptor, parent));
-    return 1;
+    return callOnMainThread(L, createWindowNow);
 }
 
 static int showFileDialog(lua_State* L) {
-    GuiModule* gui = getMainThreadInstance(L);
-    FileDialogDescriptor fileDialogDescriptor = getFileDialogDescriptor(L);
-    IWindow* parent = nullptr;
-    if (!lua_isnoneornil(L, 2)) {
-        parent = LuauWindow::Check(L, 2)->get();
-    }
-
-    std::vector<std::string> paths = gui->showFileDialog(fileDialogDescriptor, parent);
-    if (paths.empty()) {
-        lua_pushnil(L);
-        return 1;
-    }
-
-    lua_createtable(L, (int)paths.size(), 0);
-    for (size_t i = 0; i < paths.size(); ++i) {
-        lua_pushlstring(L, paths[i].data(), paths[i].size());
-        lua_rawseti(L, -2, (int)i + 1);
-    }
-    return 1;
+    return callOnMainThread(L, showFileDialogNow);
 }
 
 const char* GuiModule::getModuleName() const {
@@ -189,8 +217,6 @@ const char* GuiModule::getModuleAlias() const {
 
 static LuauExport exports[] = {
     { "createWindow", createWindow },
-    { "createButton", createButton },
-    { "createMenuBar", createMenuBar },
     { "showFileDialog", showFileDialog },
     { nullptr, nullptr }
 };

@@ -6,12 +6,15 @@ if(WIN32)
             Descriptors.cpp
             Descriptors.h
             IGuiModule.h
-            Handles.cpp
-            Handles.h
+            MainThreadCall.h
+            Nodes.cpp
+            Nodes.h
             Windows/Button.cpp
             Windows/Button.h
             Windows/FileDialog.cpp
             Windows/FileDialog.h
+            Windows/Menu.cpp
+            Windows/Menu.h
             Windows/MenuBar.cpp
             Windows/MenuBar.h
             Windows/MenuItem.cpp
@@ -34,14 +37,18 @@ elseif(APPLE)
             Descriptors.cpp
             Descriptors.h
             IGuiModule.h
-            Handles.cpp
-            Handles.h
+            MainThreadCall.h
+            Nodes.cpp
+            Nodes.h
             Mac/Button.mm
             Mac/Button.h
             Mac/FileDialog.mm
             Mac/FileDialog.h
+            Mac/Menu.mm
+            Mac/Menu.h
             Mac/MenuBar.mm
             Mac/MenuBar.h
+            Mac/Mnemonic.h
             Mac/MenuItem.mm
             Mac/MenuItem.h
             Mac/GuiModule.mm
@@ -77,8 +84,9 @@ elseif(UNIX)
             Descriptors.cpp
             Descriptors.h
             IGuiModule.h
-            Handles.cpp
-            Handles.h
+            MainThreadCall.h
+            Nodes.cpp
+            Nodes.h
             Linux/Button.cpp
             Linux/Button.h
             Linux/FileDialog.cpp
@@ -87,6 +95,8 @@ elseif(UNIX)
             Linux/GtkLoop.h
             Linux/GuiModule.cpp
             Linux/GuiModule.h
+            Linux/Menu.cpp
+            Linux/Menu.h
             Linux/MenuBar.cpp
             Linux/MenuBar.h
             Linux/MenuItem.cpp
@@ -102,3 +112,6 @@ elseif(UNIX)
     # PUBLIC so executables linking this static library also link gtkmm.
     target_link_libraries(Luwow.Gui PUBLIC PkgConfig::GTKMM)
 endif()
+
+# Events and property changes are signals
+target_link_libraries(Luwow.Gui PRIVATE Luwow.SignalCore)

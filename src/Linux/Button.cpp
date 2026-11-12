@@ -1,44 +1,42 @@
 #include "Button.h"
 #include "Mnemonic.h"
 #include "Window.h"
-#include "ILuauHost.h"
 
 #include <stdexcept>
-#include "lua.h"
-#include "lualib.h"
 
 namespace Luwow::Gui {
 
-Button::Button(const ButtonDescriptor& descriptor, IWindow* parent) : descriptor(descriptor) {
-    Window* parentWindow = dynamic_cast<Window*>(parent);
-    if (!parentWindow) {
+Button::Button(const ButtonDescriptor& descriptor, IWindow* parent) {
+    window = dynamic_cast<Window*>(parent);
+    if (!window) {
         throw std::runtime_error("Parent window is not a Window");
     }
 
-    Gtk::Fixed* fixed = parentWindow->getFixed();
-    if (!fixed) {
-        throw std::runtime_error("Parent window has no content area");
-    }
-
-    (void)parentWindow->registerCommandControl(this);
-
     button = Gtk::manage(new Gtk::Button(windowsMnemonicToGtk(descriptor.Caption), true));
-    button->set_size_request(descriptor.Width, descriptor.Height);
-    fixed->put(*button, descriptor.Left, descriptor.Top);
+    if (descriptor.Width > 0 && descriptor.Height > 0) {
+        button->set_size_request(descriptor.Width, descriptor.Height);
+    }
+    window->getFixed()->put(*button, descriptor.Left, descriptor.Top);
     button->show();
 
     clicked = button->signal_clicked().connect(sigc::mem_fun(*this, &Button::onCommand));
 }
 
+// Taken out of its window, which stays until its children are gone
 Button::~Button() {
     clicked.disconnect();
+    delete button;
 }
 
-void Button::onCommand() {
-    Luwow::Engine::StateLock lock(descriptor.host);
-    lua_State* L = descriptor.L;
-    lua_getref(L, descriptor.OnPressedRef);
-    lua_pcall(L, 0, 0, 0);
+void Button::setCaption(const std::string& caption) {
+    button->set_label(windowsMnemonicToGtk(caption));
+}
+
+void Button::setBounds(int left, int top, int width, int height) {
+    window->getFixed()->move(*button, left, top);
+    if (width > 0 && height > 0) {
+        button->set_size_request(width, height);
+    }
 }
 
 } // namespace Luwow::Gui

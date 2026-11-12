@@ -9,11 +9,11 @@ public:
     MenuItem(const MenuItemDescriptor& descriptor, IWindow* parent);
     ~MenuItem() override;
 
+    void setTitle(const std::string& title) override;
+
     void* getNativeMenuItem() const { return nativeMenuItem; }
-    void onCommand() override;
 
 private:
-    MenuItemDescriptor descriptor;
     void* nativeMenuItem = nullptr;
     void* nativeTarget = nullptr;
 };

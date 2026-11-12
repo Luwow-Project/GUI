@@ -16,18 +16,29 @@
 @end
 
 @interface LuwowWindowDelegate : NSObject <NSWindowDelegate>
+@property (nonatomic, assign) Luwow::Gui::Window* owner;
 @end
 
 @implementation LuwowWindowDelegate
 - (void)windowWillClose:(NSNotification*)notification {
     (void)notification;
-    [[NSApplication sharedApplication] terminate:nil];
+    if (self.owner) self.owner->willClose();
+}
+
+- (void)windowDidMove:(NSNotification*)notification {
+    (void)notification;
+    if (self.owner) self.owner->boundsChanged();
+}
+
+- (void)windowDidResize:(NSNotification*)notification {
+    (void)notification;
+    if (self.owner) self.owner->boundsChanged();
 }
 @end
 
 namespace Luwow::Gui {
 
-Window::Window(const WindowDescriptor& descriptor) : descriptor(descriptor) {
+Window::Window(const WindowDescriptor& descriptor) {
     @autoreleasepool {
         NSScreen* screen = [NSScreen mainScreen];
         NSRect screenFrame = [screen frame];
@@ -45,6 +56,7 @@ Window::Window(const WindowDescriptor& descriptor) : descriptor(descriptor) {
         [window setContentView:cv];
 
         LuwowWindowDelegate* delegate = [[LuwowWindowDelegate alloc] init];
+        delegate.owner = this;
         [window setDelegate:delegate];
 
         nativeWindow = (__bridge_retained void*)window;
@@ -54,6 +66,13 @@ Window::Window(const WindowDescriptor& descriptor) : descriptor(descriptor) {
 
 Window::~Window() {
     @autoreleasepool {
+        if (nativeDelegate) {
+            ((__bridge LuwowWindowDelegate*)nativeDelegate).owner = nullptr;
+        }
+        if (nativeWindow && open) {
+            [(__bridge NSWindow*)nativeWindow close];
+            willClose();
+        }
         if (nativeDelegate) {
             id delegate = (__bridge_transfer id)nativeDelegate;
             nativeDelegate = nullptr;
@@ -73,8 +92,13 @@ uint16_t Window::registerCommandControl(ICommandControl* commandControl) {
     return id;
 }
 
+void Window::unregisterCommandControl(uint16_t id) {
+    commandControls.erase(id);
+}
+
 ICommandControl* Window::getCommandControl(uint16_t id) const {
-    return commandControls.at(id);
+    auto it = commandControls.find(id);
+    return it == commandControls.end() ? nullptr : it->second;
 }
 
 void Window::show() {
@@ -82,15 +106,65 @@ void Window::show() {
     if (!w) {
         throw std::runtime_error("Window not found");
     }
+    if (!open) {
+        return;
+    }
+    if (!shown) {
+        shown = true;
+        windowShown();
+    }
     [w makeKeyAndOrderFront:nil];
+}
+
+void Window::willClose() {
+    open = false;
+    if (shown) {
+        shown = false;
+        windowClosed();
+    }
 }
 
 void Window::close() {
     NSWindow* w = (__bridge NSWindow*)nativeWindow;
-    if (!w) {
-        throw std::runtime_error("Window not found");
+    if (!w || !open) {
+        return;
     }
     [w close];
+    willClose();
+}
+
+void Window::setTitle(const std::string& title) {
+    NSWindow* w = (__bridge NSWindow*)nativeWindow;
+    if (!w || !open) {
+        return;
+    }
+    [w setTitle:[NSString stringWithUTF8String:title.c_str()]];
+}
+
+// Left and Top are from the screen's top left, as on Windows, and the size is the content's
+void Window::setBounds(int left, int top, int width, int height) {
+    NSWindow* w = (__bridge NSWindow*)nativeWindow;
+    if (!w || !open) {
+        return;
+    }
+    NSRect screenFrame = [[NSScreen mainScreen] frame];
+    CGFloat y = NSHeight(screenFrame) - top - height;
+    NSRect content = NSMakeRect(left, y, width, height);
+    [w setFrame:[w frameRectForContentRect:content] display:YES];
+}
+
+// As setBounds takes them: the content's size, from the screen's top left
+void Window::getBounds(int& left, int& top, int& width, int& height) const {
+    NSWindow* w = (__bridge NSWindow*)nativeWindow;
+    if (!w || !open) {
+        return;
+    }
+    NSRect content = [w contentRectForFrameRect:[w frame]];
+    NSRect screenFrame = [[NSScreen mainScreen] frame];
+    left = (int)NSMinX(content);
+    width = (int)NSWidth(content);
+    height = (int)NSHeight(content);
+    top = (int)(NSHeight(screenFrame) - NSMaxY(content));
 }
 
 void* Window::getNativeContentView() const {
