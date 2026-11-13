@@ -26,56 +26,6 @@ void pushPair(lua_State* L, int first, int second) {
     lua_rawseti(L, -2, 2);
 }
 
-// A string field the descriptor must have
-static std::string requiredString(lua_State* L, int index, const char* field, const char* type) {
-    lua_getfield(L, index, field);
-    if (!lua_isstring(L, -1)) {
-        luaL_error(L, "%s descriptor needs %s, a string", type, field);
-    }
-    std::string value = lua_tostring(L, -1);
-    lua_pop(L, 1);
-    return value;
-}
-
-// A field of two whole numbers, {x, y} or {width, height}, left as they are when it's left out
-static void optionalPair(lua_State* L, int index, const char* field, const char* type, int& first, int& second) {
-    lua_getfield(L, index, field);
-    if (!lua_isnil(L, -1)) {
-        if (!readPair(L, -1, first, second)) {
-            luaL_error(L, "%s descriptor's %s must be a table of two numbers", type, field);
-        }
-    }
-    lua_pop(L, 1);
-}
-
-WindowDescriptor readWindowDescriptor(lua_State* L, int index) {
-    WindowDescriptor descriptor;
-    descriptor.Title = requiredString(L, index, "Title", "Window");
-    optionalPair(L, index, "Size", "Window", descriptor.Width, descriptor.Height);
-    optionalPair(L, index, "Position", "Window", descriptor.Left, descriptor.Top);
-    return descriptor;
-}
-
-ButtonDescriptor readButtonDescriptor(lua_State* L, int index) {
-    ButtonDescriptor descriptor;
-    descriptor.Caption = requiredString(L, index, "Caption", "Button");
-    optionalPair(L, index, "Size", "Button", descriptor.Width, descriptor.Height);
-    optionalPair(L, index, "Position", "Button", descriptor.Left, descriptor.Top);
-    return descriptor;
-}
-
-MenuDescriptor readMenuDescriptor(lua_State* L, int index) {
-    MenuDescriptor descriptor;
-    descriptor.Title = requiredString(L, index, "Title", "Menu");
-    return descriptor;
-}
-
-MenuItemDescriptor readMenuItemDescriptor(lua_State* L, int index) {
-    MenuItemDescriptor descriptor;
-    descriptor.Title = requiredString(L, index, "Title", "MenuItem");
-    return descriptor;
-}
-
 static FileDialogFilter getFileDialogFilter(lua_State* L) {
     FileDialogFilter filter;
     luaL_checktype(L, -1, LUA_TTABLE);

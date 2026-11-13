@@ -59,12 +59,6 @@ bool readPair(lua_State* L, int index, int& first, int& second);
 // Pushes a new {first, second} table
 void pushPair(lua_State* L, int first, int second);
 
-// The properties of the descriptor table at index
-WindowDescriptor readWindowDescriptor(lua_State* L, int index);
-ButtonDescriptor readButtonDescriptor(lua_State* L, int index);
-MenuDescriptor readMenuDescriptor(lua_State* L, int index);
-MenuItemDescriptor readMenuItemDescriptor(lua_State* L, int index);
-
 // The file dialog descriptor, the table at index
 FileDialogDescriptor getFileDialogDescriptor(lua_State* L, int index);
 

@@ -1,71 +1,27 @@
-if(WIN32)
-    luwow_add_library(Luwow.Gui
-        NAME gui
-        MODES SERIAL
-        SOURCES
-            Descriptors.cpp
-            Descriptors.h
-            IGuiModule.h
-            MainThreadCall.h
-            Nodes.cpp
-            Nodes.h
-            Windows/Button.cpp
-            Windows/Button.h
-            Windows/FileDialog.cpp
-            Windows/FileDialog.h
-            Windows/Menu.cpp
-            Windows/Menu.h
-            Windows/MenuBar.cpp
-            Windows/MenuBar.h
-            Windows/MenuItem.cpp
-            Windows/MenuItem.h
-            Windows/GuiModule.cpp
-            Windows/GuiModule.h
-            Windows/Window.cpp
-            Windows/Window.h
-    )
-    target_include_directories(Luwow.Gui PRIVATE
-        ${GUI_ROOT}/src
-        ${GUI_ROOT}/src/Windows
-    )
-    target_link_libraries(Luwow.Gui PUBLIC user32 ole32 shell32)
-elseif(APPLE)
-    luwow_add_library(Luwow.Gui
-        NAME gui
-        MODES SERIAL
-        SOURCES
-            Descriptors.cpp
-            Descriptors.h
-            IGuiModule.h
-            MainThreadCall.h
-            Nodes.cpp
-            Nodes.h
-            Mac/Button.mm
-            Mac/Button.h
-            Mac/FileDialog.mm
-            Mac/FileDialog.h
-            Mac/Menu.mm
-            Mac/Menu.h
-            Mac/MenuBar.mm
-            Mac/MenuBar.h
-            Mac/Mnemonic.h
-            Mac/MenuItem.mm
-            Mac/MenuItem.h
-            Mac/GuiModule.mm
-            Mac/GuiModule.h
-            Mac/Window.mm
-            Mac/Window.h
-    )
-    target_include_directories(Luwow.Gui PRIVATE
-        ${GUI_ROOT}/src
-        ${GUI_ROOT}/src/Mac
-    )
+set(GUI_SOURCES
+    Descriptors.cpp
+    Descriptors.h
+    GuiModule.cpp
+    GuiModule.h
+    IGuiModule.h
+    MainThreadCall.h
+    ControlNodes/Handle.h
+    ControlNodes/Property.h
+)
+foreach(node Node Window Button MenuBar Menu MenuItem)
+    list(APPEND GUI_SOURCES ControlNodes/${node}.cpp ControlNodes/${node}.h)
+endforeach()
 
+if(WIN32)
+    set(GUI_PLATFORM Windows)
+    set(GUI_PLATFORM_EXTENSION .cpp)
+    set(GUI_PLATFORM_LIBRARIES user32 ole32 shell32)
+elseif(APPLE)
+    set(GUI_PLATFORM Mac)
+    set(GUI_PLATFORM_EXTENSION .mm)
     find_library(COCOA_FRAMEWORK Cocoa REQUIRED)
-    # PUBLIC so executables linking this static library also link AppKit/Cocoa.
-    target_link_libraries(Luwow.Gui PUBLIC ${COCOA_FRAMEWORK})
-    set_target_properties(Luwow.Gui PROPERTIES OBJCXX_STANDARD 20)
-    target_compile_options(Luwow.Gui PRIVATE $<$<COMPILE_LANGUAGE:OBJCXX>:-fobjc-arc>)
+    set(GUI_PLATFORM_LIBRARIES ${COCOA_FRAMEWORK})
+    list(APPEND GUI_SOURCES Mac/Mnemonic.h)
 elseif(UNIX)
     # gtkmm 3 has Gtk::MenuBar and a modal Gtk::FileChooserDialog, which match this
     # library's menus and synchronous showFileDialog. gtkmm 4 removed both.
@@ -76,41 +32,33 @@ elseif(UNIX)
             "gtkmm 3 is required to build the GUI library on ${CMAKE_SYSTEM_NAME}. "
             "Install libgtkmm-3.0-dev (Debian/Ubuntu) or gtkmm3-devel (Fedora).")
     endif()
+    set(GUI_PLATFORM Linux)
+    set(GUI_PLATFORM_EXTENSION .cpp)
+    set(GUI_PLATFORM_LIBRARIES PkgConfig::GTKMM)
+    list(APPEND GUI_SOURCES Linux/Mnemonic.h)
+endif()
 
-    luwow_add_library(Luwow.Gui
-        NAME gui
-        MODES SERIAL
-        SOURCES
-            Descriptors.cpp
-            Descriptors.h
-            IGuiModule.h
-            MainThreadCall.h
-            Nodes.cpp
-            Nodes.h
-            Linux/Button.cpp
-            Linux/Button.h
-            Linux/FileDialog.cpp
-            Linux/FileDialog.h
-            Linux/GtkLoop.cpp
-            Linux/GtkLoop.h
-            Linux/GuiModule.cpp
-            Linux/GuiModule.h
-            Linux/Menu.cpp
-            Linux/Menu.h
-            Linux/MenuBar.cpp
-            Linux/MenuBar.h
-            Linux/MenuItem.cpp
-            Linux/MenuItem.h
-            Linux/Mnemonic.h
-            Linux/Window.cpp
-            Linux/Window.h
-    )
-    target_include_directories(Luwow.Gui PRIVATE
-        ${GUI_ROOT}/src
-        ${GUI_ROOT}/src/Linux
-    )
-    # PUBLIC so executables linking this static library also link gtkmm.
-    target_link_libraries(Luwow.Gui PUBLIC PkgConfig::GTKMM)
+# Each platform implements the same controls, and the main loop in its Platform file
+foreach(control Window Button MenuBar Menu MenuItem FileDialog)
+    list(APPEND GUI_SOURCES ${GUI_PLATFORM}/${control}${GUI_PLATFORM_EXTENSION} ${GUI_PLATFORM}/${control}.h)
+endforeach()
+list(APPEND GUI_SOURCES ${GUI_PLATFORM}/Platform${GUI_PLATFORM_EXTENSION})
+
+luwow_add_library(Luwow.Gui
+    NAME gui
+    MODES SERIAL
+    SOURCES ${GUI_SOURCES}
+)
+target_include_directories(Luwow.Gui PRIVATE
+    ${GUI_ROOT}/src
+    ${GUI_ROOT}/src/${GUI_PLATFORM}
+)
+# PUBLIC so executables linking this static library also link the platform's libraries
+target_link_libraries(Luwow.Gui PUBLIC ${GUI_PLATFORM_LIBRARIES})
+
+if(APPLE)
+    set_target_properties(Luwow.Gui PROPERTIES OBJCXX_STANDARD 20)
+    target_compile_options(Luwow.Gui PRIVATE $<$<COMPILE_LANGUAGE:OBJCXX>:-fobjc-arc>)
 endif()
 
 # Events and property changes are signals

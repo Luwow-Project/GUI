@@ -1,5 +1,4 @@
 #include "Window.h"
-#include "GtkLoop.h"
 
 #include <gdk/gdk.h>
 #ifdef GDK_WINDOWING_X11
@@ -23,8 +22,6 @@ bool positionsKnown() {
 
 Window::Window(const WindowDescriptor& descriptor)
     : left(descriptor.Left), top(descriptor.Top), width(descriptor.Width), height(descriptor.Height) {
-    ensureGtkInitialized();
-
     gtkWindow = std::make_unique<Gtk::Window>();
     gtkWindow->set_title(descriptor.Title);
     if (width > 0 && height > 0) {

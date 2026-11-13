@@ -39,7 +39,8 @@ private:
     void* nativeDelegate = nullptr;
 };
 
-// The run loop's count of shown windows, which ends the loop when the last one closes
+// The main loop's count of shown windows. Closing the last one ends the loop, and a window that's never
+// shown doesn't keep it running.
 void windowShown();
 void windowClosed();
 

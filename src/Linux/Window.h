@@ -54,4 +54,9 @@ private:
     int height = 0;
 };
 
+// The main loop's count of shown windows. Closing the last one ends the loop, and a window that's never
+// shown doesn't keep it running.
+void windowShown();
+void windowClosed();
+
 } // namespace Luwow::Gui
