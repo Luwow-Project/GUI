@@ -35,7 +35,7 @@ export type GuiWindowDescriptor = {
 	Title: string,
 	Size: GuiVector?,
 	Position: GuiVector?,
-	Children: { [number | string]: GuiButtonDescriptor | GuiMenuBarDescriptor }?,
+	Children: { [number | string]: GuiButtonDescriptor | GuiTextLabelDescriptor | GuiTextBoxDescriptor | GuiTextAreaDescriptor | GuiMenuBarDescriptor }?,
 }
 
 export type GuiButtonDescriptor = {
@@ -46,6 +46,33 @@ export type GuiButtonDescriptor = {
 	Size: GuiVector?,
 	Position: GuiVector?,
 	OnPressed: (() -> ())?
+}
+
+export type GuiTextLabelDescriptor = {
+	Type: "TextLabel",
+	Name: string?,
+	Order: number?,
+	Text: string,
+	Size: GuiVector?,
+	Position: GuiVector?,
+}
+
+export type GuiTextBoxDescriptor = {
+	Type: "TextBox",
+	Name: string?,
+	Order: number?,
+	Text: string?,
+	Size: GuiVector?,
+	Position: GuiVector?,
+}
+
+export type GuiTextAreaDescriptor = {
+	Type: "TextArea",
+	Name: string?,
+	Order: number?,
+	Text: string?,
+	Size: GuiVector?,
+	Position: GuiVector?,
 }
 
 export type GuiMenuItemDescriptor = {
@@ -73,7 +100,7 @@ export type GuiMenuBarDescriptor = {
 	Menus: { GuiMenuDescriptor }?
 }
 
-export type GuiDescriptor = GuiWindowDescriptor | GuiButtonDescriptor | GuiMenuBarDescriptor | GuiMenuDescriptor | GuiMenuItemDescriptor
+export type GuiDescriptor = GuiWindowDescriptor | GuiButtonDescriptor | GuiTextLabelDescriptor | GuiTextBoxDescriptor | GuiTextAreaDescriptor | GuiMenuBarDescriptor | GuiMenuDescriptor | GuiMenuItemDescriptor
 
 export type GuiFileDialogFilter = {
 	Name: string,
@@ -124,13 +151,13 @@ declare extern type GuiWindow extends GuiNode with
 	Position: GuiVector
 
 	--[=[
-		Makes a Button or MenuBar descriptor into a new child node, its own Children too.
+		Makes a Button, text control or MenuBar descriptor into a new child node, its own Children too.
 
 		@param descriptor The child's descriptor.
 		@param at The child's 1-based position, or a child to put it before. The end when it's left out.
 		@return The new child node.
 	]=]
-	function add(self, descriptor: GuiButtonDescriptor | GuiMenuBarDescriptor, at: (number | GuiNode)?): GuiButton | GuiMenuBar
+	function add(self, descriptor: GuiButtonDescriptor | GuiTextLabelDescriptor | GuiTextBoxDescriptor | GuiTextAreaDescriptor | GuiMenuBarDescriptor, at: (number | GuiNode)?): GuiButton | GuiTextLabel | GuiTextBox | GuiTextArea | GuiMenuBar
 
 	--[=[
 		Takes a child and its children away. Their nodes can't be used after.
@@ -156,6 +183,24 @@ declare extern type GuiButton extends GuiNode with
 	Position: GuiVector
 	-- Fired when the button is pressed
 	read OnPressed: GuiSignal<>
+end
+
+declare extern type GuiTextLabel extends GuiNode with
+	Text: string
+	Size: GuiVector
+	Position: GuiVector
+end
+
+declare extern type GuiTextBox extends GuiNode with
+	Text: string
+	Size: GuiVector
+	Position: GuiVector
+end
+
+declare extern type GuiTextArea extends GuiNode with
+	Text: string
+	Size: GuiVector
+	Position: GuiVector
 end
 
 declare extern type GuiMenuBar extends GuiNode with
@@ -208,6 +253,9 @@ end
 export type GuiComponents = {
 	Window: { Node: GuiWindow, Descriptor: GuiWindowDescriptor },
 	Button: { Node: GuiButton, Descriptor: GuiButtonDescriptor },
+	TextLabel: { Node: GuiTextLabel, Descriptor: GuiTextLabelDescriptor },
+	TextBox: { Node: GuiTextBox, Descriptor: GuiTextBoxDescriptor },
+	TextArea: { Node: GuiTextArea, Descriptor: GuiTextAreaDescriptor },
 	MenuBar: { Node: GuiMenuBar, Descriptor: GuiMenuBarDescriptor },
 	Menu: { Node: GuiMenu, Descriptor: GuiMenuDescriptor },
 	MenuItem: { Node: GuiMenuItem, Descriptor: GuiMenuItemDescriptor },

@@ -3,6 +3,9 @@
 // The platform's controls, from its folder
 #include "Window.h"
 #include "Button.h"
+#include "TextLabel.h"
+#include "TextBox.h"
+#include "TextArea.h"
 #include "MenuBar.h"
 #include "Menu.h"
 #include "MenuItem.h"
@@ -137,6 +140,18 @@ IWindow* GuiModule::createWindow(const WindowDescriptor& descriptor) {
 
 IButton* GuiModule::createButton(const ButtonDescriptor& descriptor, IWindow* window) {
     return new Button(descriptor, window);
+}
+
+ITextLabel* GuiModule::createTextLabel(const TextLabelDescriptor& descriptor, IWindow* window) {
+    return new TextLabel(descriptor, window);
+}
+
+ITextBox* GuiModule::createTextBox(const TextBoxDescriptor& descriptor, IWindow* window) {
+    return new TextBox(descriptor, window);
+}
+
+ITextArea* GuiModule::createTextArea(const TextAreaDescriptor& descriptor, IWindow* window) {
+    return new TextArea(descriptor, window);
 }
 
 IMenuBar* GuiModule::createMenuBar(IWindow* window) {

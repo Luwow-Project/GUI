@@ -44,6 +44,30 @@ struct ButtonDescriptor {
     int Top = 0;
 };
 
+struct TextLabelDescriptor {
+    std::string Text = "";
+    int Width = 0;
+    int Height = 0;
+    int Left = 0;
+    int Top = 0;
+};
+
+struct TextBoxDescriptor {
+    std::string Text = "";
+    int Width = 0;
+    int Height = 0;
+    int Left = 0;
+    int Top = 0;
+};
+
+struct TextAreaDescriptor {
+    std::string Text = "";
+    int Width = 0;
+    int Height = 0;
+    int Left = 0;
+    int Top = 0;
+};
+
 struct MenuBarDescriptor {};
 
 struct MenuDescriptor {

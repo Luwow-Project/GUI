@@ -18,9 +18,9 @@ public:
     void setTitle(const std::string& title) override;
     void setBounds(int left, int top, int width, int height) override;
     void getBounds(int& left, int& top, int& width, int& height) const override;
-    virtual uint16_t registerCommandControl(ICommandControl* commandControl) override;
-    void unregisterCommandControl(uint16_t id) override;
-    virtual ICommandControl* getCommandControl(uint16_t id) const override;
+    uint16_t registerControl(IControl* control);
+    void unregisterControl(uint16_t id);
+    IControl* getControl(uint16_t id) const;
 
     // The window was destroyed, by close() or the user, along with its child controls and menu bar
     void destroyed();
@@ -32,8 +32,8 @@ public:
     HWND getHWND() const { return hWnd; };
 
 private:
-    uint16_t nextCommandId = 1;
-    std::unordered_map<uint16_t, ICommandControl*> commandControls;
+    uint16_t nextControlId = 1;
+    std::unordered_map<uint16_t, IControl*> controls;
     HWND hWnd;
     // Shown and not yet destroyed, one of the windows the message loop runs for
     bool shown = false;

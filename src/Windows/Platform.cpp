@@ -43,11 +43,17 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
         {
             Window* window = GetWindow(hWnd);
             if (!window) break;
-            // A control removed since the message was posted is no longer there
+            WORD notification = HIWORD(wParam);
             uint16_t commandId = LOWORD(wParam);
-            if (ICommandControl* commandControl = window->getCommandControl(commandId)) {
-                commandControl->onCommand();
+            IControl* control = window->getControl(commandId);
+            if (!control) break;
+            if (notification == BN_CLICKED) {
+                dynamic_cast<ICommandControl*>(control)->onCommand();
             }
+            else if (notification == EN_CHANGE) {
+                dynamic_cast<ITextEditorControl*>(control)->onTextChanged();
+            }
+
             break;
         }
     }

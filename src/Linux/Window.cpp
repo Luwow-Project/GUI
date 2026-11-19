@@ -81,21 +81,6 @@ bool Window::onConfigureEvent(GdkEventConfigure* event) {
     return false;
 }
 
-uint16_t Window::registerCommandControl(ICommandControl* commandControl) {
-    uint16_t id = nextCommandId++;
-    commandControls[id] = commandControl;
-    return id;
-}
-
-void Window::unregisterCommandControl(uint16_t id) {
-    commandControls.erase(id);
-}
-
-ICommandControl* Window::getCommandControl(uint16_t id) const {
-    auto it = commandControls.find(id);
-    return it == commandControls.end() ? nullptr : it->second;
-}
-
 void Window::show() {
     if (!open) {
         return;

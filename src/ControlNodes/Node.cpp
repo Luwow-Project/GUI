@@ -1,6 +1,9 @@
 #include "Node.h"
 #include "Window.h"
 #include "Button.h"
+#include "TextLabel.h"
+#include "TextBox.h"
+#include "TextArea.h"
 #include "MenuBar.h"
 #include "Menu.h"
 #include "MenuItem.h"
@@ -58,7 +61,16 @@ struct NodeTypes {
     }
 };
 
-using AllNodeTypes = NodeTypes<ControlNode::Window, ControlNode::Button, ControlNode::MenuBar, ControlNode::Menu, ControlNode::MenuItem>;
+using AllNodeTypes = NodeTypes<
+    ControlNode::Window,
+    ControlNode::Button,
+    ControlNode::TextLabel,
+    ControlNode::TextBox,
+    ControlNode::TextArea,
+    ControlNode::MenuBar,
+    ControlNode::Menu,
+    ControlNode::MenuItem
+>;
 
 void releaseSignals(lua_State* L, Node& node) {
     for (auto& [key, ref] : node.signals) {

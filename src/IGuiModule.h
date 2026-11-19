@@ -17,10 +17,20 @@ class ILuauHost;
 // and a node destroys its children's controls before its own.
 namespace Luwow::Gui {
 
-class ICommandControl {
+class IControl {
 public:
-    virtual ~ICommandControl() = default;
+    virtual ~IControl() = default;
+};
+
+class ICommandControl : public IControl {
+public:
     virtual void onCommand() = 0;
+};
+
+class ITextEditorControl : public IControl {
+public:
+    virtual ~ITextEditorControl() = default;
+    std::function<void()> onTextChanged;
 };
 
 // A control the user activates, such as a button or a menu item, which runs onActivated
@@ -48,16 +58,38 @@ public:
     virtual void setTitle(const std::string& title) = 0;
     virtual void setBounds(int left, int top, int width, int height) = 0;
     virtual void getBounds(int& left, int& top, int& width, int& height) const = 0;
-    virtual uint16_t registerCommandControl(ICommandControl* commandControl) = 0;
-    virtual void unregisterCommandControl(uint16_t id) = 0;
     // nullptr for an id that's no longer registered
-    virtual ICommandControl* getCommandControl(uint16_t id) const = 0;
 };
 
 class IButton : public IActivatable {
 public:
     virtual ~IButton() = default;
     virtual void setCaption(const std::string& caption) = 0;
+    virtual void setBounds(int left, int top, int width, int height) = 0;
+};
+
+class ITextLabel {
+public:
+    virtual ~ITextLabel() = default;
+    virtual void setText(const std::string& text) = 0;
+    virtual void setBounds(int left, int top, int width, int height) = 0;
+};
+
+// A single-line text field. onTextChanged runs on the main thread when the user edits it.
+class ITextBox : public ITextEditorControl {
+public:
+    virtual ~ITextBox() = default;
+    virtual void setText(const std::string& text) = 0;
+    virtual std::string getText() const = 0;
+    virtual void setBounds(int left, int top, int width, int height) = 0;
+};
+
+// A multi-line text field. onTextChanged runs on the main thread when the user edits it.
+class ITextArea : public ITextEditorControl {
+public:
+    virtual ~ITextArea() = default;
+    virtual void setText(const std::string& text) = 0;
+    virtual std::string getText() const = 0;
     virtual void setBounds(int left, int top, int width, int height) = 0;
 };
 
@@ -92,6 +124,9 @@ public:
 
     virtual IWindow* createWindow(const WindowDescriptor& descriptor) = 0;
     virtual IButton* createButton(const ButtonDescriptor& descriptor, IWindow* window) = 0;
+    virtual ITextLabel* createTextLabel(const TextLabelDescriptor& descriptor, IWindow* window) = 0;
+    virtual ITextBox* createTextBox(const TextBoxDescriptor& descriptor, IWindow* window) = 0;
+    virtual ITextArea* createTextArea(const TextAreaDescriptor& descriptor, IWindow* window) = 0;
     virtual IMenuBar* createMenuBar(IWindow* window) = 0;
     virtual IMenu* createMenu(const MenuDescriptor& descriptor) = 0;
     virtual IMenuItem* createMenuItem(const MenuItemDescriptor& descriptor, IWindow* window) = 0;

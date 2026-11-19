@@ -27,6 +27,9 @@ public:
 
     IWindow* createWindow(const WindowDescriptor& descriptor) override;
     IButton* createButton(const ButtonDescriptor& descriptor, IWindow* window) override;
+    ITextLabel* createTextLabel(const TextLabelDescriptor& descriptor, IWindow* window) override;
+    ITextBox* createTextBox(const TextBoxDescriptor& descriptor, IWindow* window) override;
+    ITextArea* createTextArea(const TextAreaDescriptor& descriptor, IWindow* window) override;
     IMenuBar* createMenuBar(IWindow* window) override;
     IMenu* createMenu(const MenuDescriptor& descriptor) override;
     IMenuItem* createMenuItem(const MenuItemDescriptor& descriptor, IWindow* window) override;

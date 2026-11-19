@@ -10,11 +10,11 @@ MenuItem::MenuItem(const MenuItemDescriptor& descriptor, IWindow* parent) : titl
         throw std::runtime_error("Parent window is not a Window");
     }
 
-    id = window->registerCommandControl(this);
+    id = window->registerControl(this);
 }
 
 MenuItem::~MenuItem() {
-    window->unregisterCommandControl(id);
+    window->unregisterControl(id);
     if (owner && window->isOpen()) DeleteMenu(owner, id, MF_BYCOMMAND);
 }
 

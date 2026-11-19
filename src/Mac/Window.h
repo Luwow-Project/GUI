@@ -16,9 +16,6 @@ public:
     void setTitle(const std::string& title) override;
     void setBounds(int left, int top, int width, int height) override;
     void getBounds(int& left, int& top, int& width, int& height) const override;
-    uint16_t registerCommandControl(ICommandControl* commandControl) override;
-    void unregisterCommandControl(uint16_t id) override;
-    ICommandControl* getCommandControl(uint16_t id) const override;
 
     void* getNativeContentView() const;
 
@@ -30,8 +27,6 @@ public:
     void willClose();
 
 private:
-    uint16_t nextCommandId = 1;
-    std::unordered_map<uint16_t, ICommandControl*> commandControls;
     bool open = true;
     // Shown and not yet closed, one of the windows the run loop runs for
     bool shown = false;

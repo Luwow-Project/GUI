@@ -34,12 +34,12 @@ struct Property {
 template <typename N>
 using Properties = std::vector<Property<N>>;
 
-// A required string
+// A string property
 template <typename N, auto Field>
-Property<N> stringProperty(const char* name, void (*apply)(N&)) {
+Property<N> stringProperty(const char* name, void (*apply)(N&), bool required = true) {
     using D = typename Property<N>::Descriptor;
     return {
-        name, "a string", true,
+        name, "a string", required,
         [](lua_State* L, int index, D& descriptor) {
             if (!lua_isstring(L, index)) return false;
             descriptor.*Field = lua_tostring(L, index);

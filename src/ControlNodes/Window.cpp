@@ -1,5 +1,8 @@
 #include "Window.h"
 #include "Button.h"
+#include "TextLabel.h"
+#include "TextBox.h"
+#include "TextArea.h"
 #include "MenuBar.h"
 #include "Handle.h"
 #include "ILuauHost.h"
@@ -36,7 +39,11 @@ void Window::pushHandle(lua_State* L) {
 }
 
 bool Window::acceptsChild(const Node& child) const {
-    return dynamic_cast<const Button*>(&child) || dynamic_cast<const MenuBar*>(&child);
+    return dynamic_cast<const Button*>(&child)
+        || dynamic_cast<const TextLabel*>(&child)
+        || dynamic_cast<const TextBox*>(&child)
+        || dynamic_cast<const TextArea*>(&child)
+        || dynamic_cast<const MenuBar*>(&child);
 }
 
 void Window::readProperties(lua_State* L, int index) {

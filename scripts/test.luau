@@ -112,6 +112,42 @@ local _menuBar = window:add({
   },
 })
 
+local _nameLabel = window:add({
+  Type = "TextLabel" :: "TextLabel",
+  Text = "Name",
+  Size = { 60, 20 },
+  Position = { 40, 40 },
+})
+
+local nameBox = window:add({
+  Type = "TextBox" :: "TextBox",
+  Text = "",
+  Size = { 200, 24 },
+  Position = { 110, 38 },
+})
+
+local _notesLabel = window:add({
+  Type = "TextLabel" :: "TextLabel",
+  Text = "Notes",
+  Size = { 60, 20 },
+  Position = { 40, 80 },
+})
+
+local notesArea = window:add({
+  Type = "TextArea" :: "TextArea",
+  Text = "",
+  Size = { 280, 100 },
+  Position = { 40, 104 },
+})
+
+nameBox:bindToPropertyChanged("Text"):Connect(function(text)
+  print("Name changed: " .. text)
+end)
+
+notesArea:bindToPropertyChanged("Text"):Connect(function(text)
+  print("Notes changed (" .. #text .. " chars)")
+end)
+
 local numPresses = 0
 local _button = window:add({
   Type = "Button" :: "Button",
@@ -119,9 +155,11 @@ local _button = window:add({
   OnPressed = function()
     numPresses += 1
     print("Button pressed " .. numPresses .. " times")
+    print("Name: " .. nameBox.Text)
+    print("Notes: " .. notesArea.Text)
   end,
   Size = { 100, 30 },
-  Position = { 40, 40 },
+  Position = { 40, 220 },
 })
 
 window:show()

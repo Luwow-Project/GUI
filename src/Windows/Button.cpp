@@ -11,7 +11,7 @@ Button::Button(const ButtonDescriptor& descriptor, IWindow* parent) {
         throw std::runtime_error("Parent window is not a Window");
     }
 
-    id = window->registerCommandControl(this);
+    id = window->registerControl(this);
 
     HWND hParent = window->getHWND();
     hButton = CreateWindowExA(
@@ -29,13 +29,13 @@ Button::Button(const ButtonDescriptor& descriptor, IWindow* parent) {
         NULL
     );
     if (!hButton) {
-        window->unregisterCommandControl(id);
+        window->unregisterControl(id);
         throw std::runtime_error("Failed to create button");
     }
 }
 
 Button::~Button() {
-    window->unregisterCommandControl(id);
+    window->unregisterControl(id);
     if (window->isOpen()) DestroyWindow(hButton);
 }
 

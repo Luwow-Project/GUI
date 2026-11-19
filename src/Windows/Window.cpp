@@ -27,19 +27,19 @@ Window::Window(const WindowDescriptor& descriptor) {
     SetWindowLongPtr(hWnd, GWLP_USERDATA, (LONG_PTR)this);
 }
 
-uint16_t Window::registerCommandControl(ICommandControl* commandControl) {
-    uint16_t id = nextCommandId++;
-    commandControls[id] = commandControl;
+uint16_t Window::registerControl(IControl* control) {
+    uint16_t id = nextControlId++;
+    controls[id] = control;
     return id;
 }
 
-void Window::unregisterCommandControl(uint16_t id) {
-    commandControls.erase(id);
+void Window::unregisterControl(uint16_t id) {
+    controls.erase(id);
 }
 
-ICommandControl* Window::getCommandControl(uint16_t id) const {
-    auto it = commandControls.find(id);
-    return it == commandControls.end() ? nullptr : it->second;
+IControl* Window::getControl(uint16_t id) const {
+    auto it = controls.find(id);
+    return it == controls.end() ? nullptr : it->second;
 }
 
 void Window::show() {
