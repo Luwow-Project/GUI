@@ -13,8 +13,8 @@ class ILuauHost;
 }
 
 // Abstract interface for the GUI API consistent across platform implementations.
-// Each interface is a node's control on the platform. Destroying one takes it off the screen,
-// and a node destroys its children's controls before its own.
+// Each interface is a Control's native control on the platform. Destroying one takes it off the screen,
+// and a Control destroys its children's native controls before its own.
 namespace Luwow::Gui {
 
 class IControl {
@@ -22,24 +22,16 @@ public:
     virtual ~IControl() = default;
 };
 
+// A control the user activates, such as a button or a menu item, which runs onCommand
 class ICommandControl : public IControl {
 public:
-    virtual void onCommand() = 0;
+    std::function<void()> onCommand;
 };
 
 class ITextEditorControl : public IControl {
 public:
     virtual ~ITextEditorControl() = default;
     std::function<void()> onTextChanged;
-};
-
-// A control the user activates, such as a button or a menu item, which runs onActivated
-class IActivatable : public ICommandControl {
-public:
-    std::function<void()> onActivated;
-    void onCommand() override {
-        if (onActivated) onActivated();
-    }
 };
 
 class IWindow {
@@ -61,7 +53,7 @@ public:
     // nullptr for an id that's no longer registered
 };
 
-class IButton : public IActivatable {
+class IButton : public ICommandControl {
 public:
     virtual ~IButton() = default;
     virtual void setCaption(const std::string& caption) = 0;
@@ -93,7 +85,7 @@ public:
     virtual void setBounds(int left, int top, int width, int height) = 0;
 };
 
-class IMenuItem : public IActivatable {
+class IMenuItem : public ICommandControl {
 public:
     virtual ~IMenuItem() = default;
     virtual void setTitle(const std::string& title) = 0;

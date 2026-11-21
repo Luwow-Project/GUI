@@ -12,7 +12,7 @@
 - (void)clicked:(id)sender {
     (void)sender;
     if (self.cppButton) {
-        self.cppButton->onCommand();
+        if (self.cppButton->onCommand) self.cppButton->onCommand();
     }
 }
 @end

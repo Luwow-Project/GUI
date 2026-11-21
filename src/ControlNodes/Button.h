@@ -1,27 +1,27 @@
 #pragma once
 
-#include "Node.h"
+#include "Control.h"
 #include "Property.h"
 
 namespace Luwow::Gui::ControlNode {
 
 // A push button in a window
-class Button : public Node {
+class Button : public Control {
 public:
     static constexpr const char* TypeName = "Button";
     static const Properties<Button>& GetProperties();
 
-    using Node::Node;
+    using Control::Control;
     const char* typeName() const override { return TypeName; }
     void pushHandle(lua_State* L) override;
-    const char* activationEvent() const override { return "OnPressed"; }
-    IActivatable* activatable() override { return control.get(); }
+    const char* commandEvent() const override { return "OnPressed"; }
+    ICommandControl* commandControl() override { return native.get(); }
     void readProperties(lua_State* L, int index) override;
-    void createControl(lua_State* L, Node* parent, size_t position) override;
-    void destroyControl() override { control.reset(); }
+    void createNative(lua_State* L, Control* parent, size_t position) override;
+    void destroyNative() override { native.reset(); }
 
     ButtonDescriptor properties;
-    std::unique_ptr<IButton> control;
+    std::unique_ptr<IButton> native;
 };
 
 } // namespace Luwow::Gui::ControlNode

@@ -45,9 +45,9 @@ int showFileDialogNow(lua_State* L) {
     FileDialogDescriptor descriptor = getFileDialogDescriptor(L, 1);
     IWindow* parent = nullptr;
     if (!lua_isnoneornil(L, 2)) {
-        auto* window = dynamic_cast<ControlNode::Window*>(nodeArg(L, 2).get());
+        auto* window = dynamic_cast<ControlNode::Window*>(controlArg(L, 2).get());
         if (!window) luaL_typeerror(L, 2, ControlNode::Window::TypeName);
-        parent = window->control.get();
+        parent = window->native.get();
     }
     std::vector<std::string> paths = getModuleInstance(L)->showFileDialog(descriptor, parent);
     if (paths.empty()) {
@@ -92,7 +92,7 @@ Luwow::Engine::ILuauModule* GuiModule::initialize(Luwow::Engine::ILuauHost* host
     gui->host = host;
     gui->mainThread = std::this_thread::get_id();
     gui->startPlatform();
-    registerNodes(host->getMainState(), host, gui);
+    registerControls(host->getMainState(), host, gui);
     return gui;
 }
 

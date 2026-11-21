@@ -8,7 +8,7 @@ namespace {
 
 void applyBounds(TextLabel& label) {
     const TextLabelDescriptor& p = label.properties;
-    label.control->setBounds(p.Left, p.Top, p.Width, p.Height);
+    label.native->setBounds(p.Left, p.Top, p.Width, p.Height);
 }
 
 } // namespace
@@ -16,7 +16,7 @@ void applyBounds(TextLabel& label) {
 const Properties<TextLabel>& TextLabel::GetProperties() {
     static const Properties<TextLabel> properties = {
         stringProperty<TextLabel, &TextLabelDescriptor::Text>("Text", [](TextLabel& label) {
-            label.control->setText(label.properties.Text);
+            label.native->setText(label.properties.Text);
         }),
         pairProperty<TextLabel, &TextLabelDescriptor::Width, &TextLabelDescriptor::Height>("Size", applyBounds),
         pairProperty<TextLabel, &TextLabelDescriptor::Left, &TextLabelDescriptor::Top>("Position", applyBounds),
@@ -32,10 +32,10 @@ void TextLabel::readProperties(lua_State* L, int index) {
     readDescriptor<TextLabel>(L, index, properties);
 }
 
-void TextLabel::createControl(lua_State* L, Node* parent, size_t position) {
+void TextLabel::createNative(lua_State* L, Control* parent, size_t position) {
     (void)L;
     (void)position;
-    control.reset(module->createTextLabel(properties, Window::containing(*parent)));
+    native.reset(module->createTextLabel(properties, Window::containing(*parent)));
 }
 
 } // namespace Luwow::Gui::ControlNode

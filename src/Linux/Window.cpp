@@ -95,7 +95,7 @@ void Window::show() {
     gtkWindow->move(left, top);
 }
 
-// The window is hidden and stays until its node goes, its widgets with it
+// The window is hidden and stays until its Control goes, its widgets with it
 void Window::close() {
     if (!open) {
         return;

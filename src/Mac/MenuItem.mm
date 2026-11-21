@@ -12,7 +12,7 @@
 - (void)selected:(id)sender {
     (void)sender;
     if (self.cppMenuItem) {
-        self.cppMenuItem->onCommand();
+        if (self.cppMenuItem->onCommand) self.cppMenuItem->onCommand();
     }
 }
 @end

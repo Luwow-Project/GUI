@@ -8,7 +8,7 @@ namespace Luwow::Gui::ControlNode {
 const Properties<MenuItem>& MenuItem::GetProperties() {
     static const Properties<MenuItem> properties = {
         stringProperty<MenuItem, &MenuItemDescriptor::Title>("Title", [](MenuItem& item) {
-            item.control->setTitle(item.properties.Title);
+            item.native->setTitle(item.properties.Title);
         }),
     };
     return properties;
@@ -22,10 +22,10 @@ void MenuItem::readProperties(lua_State* L, int index) {
     readDescriptor<MenuItem>(L, index, properties);
 }
 
-void MenuItem::createControl(lua_State* L, Node* parent, size_t position) {
+void MenuItem::createNative(lua_State* L, Control* parent, size_t position) {
     (void)L;
-    control.reset(module->createMenuItem(properties, Window::containing(*parent)));
-    static_cast<Menu*>(parent)->control->insertItem(position, control.get());
+    native.reset(module->createMenuItem(properties, Window::containing(*parent)));
+    static_cast<Menu*>(parent)->native->insertItem(position, native.get());
 }
 
 } // namespace Luwow::Gui::ControlNode

@@ -8,7 +8,7 @@ set(GUI_SOURCES
     ControlNodes/Handle.h
     ControlNodes/Property.h
 )
-foreach(node Node Window Button TextLabel TextBox TextArea MenuBar Menu MenuItem)
+foreach(node Control Window Button TextLabel TextBox TextArea MenuBar Menu MenuItem)
     list(APPEND GUI_SOURCES ControlNodes/${node}.cpp ControlNodes/${node}.h)
 endforeach()
 

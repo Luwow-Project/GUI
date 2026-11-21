@@ -9,7 +9,7 @@ namespace {
 
 void applyBounds(TextArea& textArea) {
     const TextAreaDescriptor& p = textArea.properties;
-    textArea.control->setBounds(p.Left, p.Top, p.Width, p.Height);
+    textArea.native->setBounds(p.Left, p.Top, p.Width, p.Height);
 }
 
 } // namespace
@@ -17,7 +17,7 @@ void applyBounds(TextArea& textArea) {
 const Properties<TextArea>& TextArea::GetProperties() {
     static const Properties<TextArea> properties = {
         stringProperty<TextArea, &TextAreaDescriptor::Text>("Text", [](TextArea& textArea) {
-            textArea.control->setText(textArea.properties.Text);
+            textArea.native->setText(textArea.properties.Text);
         }, false),
         pairProperty<TextArea, &TextAreaDescriptor::Width, &TextAreaDescriptor::Height>("Size", applyBounds),
         pairProperty<TextArea, &TextAreaDescriptor::Left, &TextAreaDescriptor::Top>("Position", applyBounds),
@@ -33,24 +33,24 @@ void TextArea::readProperties(lua_State* L, int index) {
     readDescriptor<TextArea>(L, index, properties);
 }
 
-void TextArea::createControl(lua_State* L, Node* parent, size_t position) {
+void TextArea::createNative(lua_State* L, Control* parent, size_t position) {
     (void)L;
     (void)position;
-    control.reset(module->createTextArea(properties, Window::containing(*parent)));
+    native.reset(module->createTextArea(properties, Window::containing(*parent)));
 
-    std::weak_ptr<Node> weak = shared_from_this();
-    control->onTextChanged = [weak] {
-        std::shared_ptr<Node> node = weak.lock();
-        Luwow::Engine::ILuauHost* host = nodeHost();
-        if (!node || !node->alive || !host) return;
+    std::weak_ptr<Control> weak = shared_from_this();
+    native->onTextChanged = [weak] {
+        std::shared_ptr<Control> control = weak.lock();
+        Luwow::Engine::ILuauHost* host = controlHost();
+        if (!control || !control->alive || !host) return;
         Luwow::Engine::StateLock lock(host);
-        static_cast<TextArea&>(*node).sync(host->getMainState());
+        static_cast<TextArea&>(*control).sync(host->getMainState());
     };
 }
 
 void TextArea::sync(lua_State* L) {
     TextAreaDescriptor before = properties;
-    properties.Text = control->getText();
+    properties.Text = native->getText();
     fireChanges(L, *this, before);
 }
 

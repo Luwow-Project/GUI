@@ -1,12 +1,12 @@
 #pragma once
 
-#include "Node.h"
+#include "Control.h"
 #include "Property.h"
 
 namespace Luwow::Gui::ControlNode {
 
-// A window, the root of a tree, with buttons, text controls and a menu bar as its children
-class Window : public Node {
+// A window, the root of a tree, with buttons, text native controls and a menu bar as its children
+class Window : public Control {
 public:
     static constexpr const char* TypeName = "Window";
     static const Properties<Window>& GetProperties();
@@ -19,29 +19,29 @@ public:
         };
     }
 
-    // The control of the window the node is in, nullptr once it's closed or when the node is detached
-    static IWindow* containing(const Node& node);
-    // Whether the node is in a window that's closed
-    static bool isClosed(const Node& node);
+    // The native control of the window the control is in, nullptr once it's closed or when the control is detached
+    static IWindow* containing(const Control& control);
+    // Whether the control is in a window that's closed
+    static bool isClosed(const Control& control);
 
-    using Node::Node;
+    using Control::Control;
     const char* typeName() const override { return TypeName; }
     void pushHandle(lua_State* L) override;
     bool takesChildren() const override { return true; }
-    bool acceptsChild(const Node& child) const override;
-    std::string refuseChild(const Node& child) const override;
+    bool acceptsChild(const Control& child) const override;
+    std::string refuseChild(const Control& child) const override;
     void readProperties(lua_State* L, int index) override;
-    void createControl(lua_State* L, Node* parent, size_t position) override;
-    void destroyControl() override { control.reset(); }
+    void createNative(lua_State* L, Control* parent, size_t position) override;
+    void destroyNative() override { native.reset(); }
     void sync(lua_State* L) override;
 
     WindowDescriptor properties;
-    std::unique_ptr<IWindow> control;
+    std::unique_ptr<IWindow> native;
 
 private:
     static int show(lua_State* L, Window& window);
     static int close(lua_State* L, Window& window);
-    // Gives the control the bounds set, then reads back the ones it took
+    // Gives the native control the bounds set, then reads back the ones it took
     static void applyBounds(Window& window);
     // Reads the window's bounds as they are on screen into its properties
     void readBounds();

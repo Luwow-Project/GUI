@@ -19,7 +19,9 @@ Button::Button(const ButtonDescriptor& descriptor, IWindow* parent) {
     window->getFixed()->put(*button, descriptor.Left, descriptor.Top);
     button->show();
 
-    clicked = button->signal_clicked().connect(sigc::mem_fun(*this, &Button::onCommand));
+    clicked = button->signal_clicked().connect([this] {
+        if (onCommand) onCommand();
+    });
 }
 
 // Taken out of its window, which stays until its children are gone

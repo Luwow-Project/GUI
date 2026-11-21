@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Node.h"
+#include "Control.h"
 #include "Descriptors.h"
 #include "lua.h"
 #include "lualib.h"
@@ -27,8 +27,8 @@ struct Property {
     bool (*read)(lua_State* L, int index, Descriptor& descriptor);
     void (*push)(lua_State* L, const Descriptor& descriptor);
     bool (*same)(const Descriptor& a, const Descriptor& b);
-    // Gives the node's control the value set
-    void (*apply)(N& node);
+    // Gives the control's native control the value set
+    void (*apply)(N& control);
 };
 
 template <typename N>
@@ -83,13 +83,13 @@ void readDescriptor(lua_State* L, int index, typename Property<N>::Descriptor& d
     }
 }
 
-// Fires the Changed signal of each of the node's properties that's no longer what it was before
+// Fires the Changed signal of each of the control's properties that's no longer what it was before
 template <typename N>
-void fireChanges(lua_State* L, N& node, const typename Property<N>::Descriptor& before) {
+void fireChanges(lua_State* L, N& control, const typename Property<N>::Descriptor& before) {
     for (const Property<N>& property : N::GetProperties()) {
-        if (property.same(before, node.properties)) continue;
-        property.push(L, node.properties);
-        fireSignal(L, node, std::string("Changed:") + property.name, 1);
+        if (property.same(before, control.properties)) continue;
+        property.push(L, control.properties);
+        fireSignal(L, control, std::string("Changed:") + property.name, 1);
     }
 }
 

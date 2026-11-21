@@ -12,7 +12,9 @@ MenuItem::MenuItem(const MenuItemDescriptor& descriptor, IWindow* parent) {
     }
 
     item = Gtk::manage(new Gtk::MenuItem(windowsMnemonicToGtk(descriptor.Title), true));
-    activate = item->signal_activate().connect(sigc::mem_fun(*this, &MenuItem::onCommand));
+    activate = item->signal_activate().connect([this] {
+        if (onCommand) onCommand();
+    });
 }
 
 // Taken out of its menu, in it or not
