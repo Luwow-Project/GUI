@@ -30,10 +30,6 @@ const Properties<Window>& Window::GetProperties() {
     return properties;
 }
 
-const std::unordered_set<std::string>& Window::memberNames() const {
-    return Handle<Window>::Members();
-}
-
 void Window::pushHandle(lua_State* L) {
     Handle<Window>::Push(L, shared_from_this());
 }
@@ -50,31 +46,35 @@ void Window::readProperties(lua_State* L, int index) {
     readDescriptor<Window>(L, index, properties);
 }
 
-void Window::describe(lua_State* L) const {
-    describeProperties(L, *this);
-}
-
-int Window::create(lua_State* L, IGuiModule* gui) {
-    luaL_checktype(L, 1, LUA_TTABLE);
-    lua_getfield(L, 1, "Type");
-    const char* type = lua_tostring(L, -1);
-    if (!type || std::string(type) != TypeName) {
-        luaL_error(L, "%s descriptor must have a Type of %s", TypeName, TypeName);
+// A window has one menu bar at most
+std::string Window::refuseChild(const Node& child) const {
+    if (dynamic_cast<const MenuBar*>(&child)) {
+        for (const std::shared_ptr<Node>& existing : children) {
+            if (dynamic_cast<const MenuBar*>(existing.get())) return "a Window has only one MenuBar";
+        }
     }
-    lua_pop(L, 1);
-
-    std::shared_ptr<Node> window = buildNode(L, 1, gui, nullptr, 0);
-    windows().push_back(window);
-    pushNode(L, window);
-    return 1;
+    return Node::refuseChild(child);
 }
 
-IWindow* Window::containing(const Node& node) {
+namespace {
+
+const Window* rootWindow(const Node& node) {
     const Node* root = &node;
     while (root->parent) root = root->parent;
-    auto* window = dynamic_cast<const Window*>(root);
+    return dynamic_cast<const Window*>(root);
+}
+
+} // namespace
+
+IWindow* Window::containing(const Node& node) {
+    const Window* window = rootWindow(node);
     if (!window || !window->control || !window->control->isOpen()) return nullptr;
     return window->control.get();
+}
+
+bool Window::isClosed(const Node& node) {
+    const Window* window = rootWindow(node);
+    return window && window->control && !window->control->isOpen();
 }
 
 int Window::show(lua_State* L, Window& window) {
@@ -94,6 +94,7 @@ void Window::createControl(lua_State* L, Node* parent, size_t position) {
     (void)parent;
     (void)position;
     control.reset(module->createWindow(properties));
+    windows().push_back(shared_from_this());
     readBounds();
 
     // Moved or resized by the user, or by the platform after setBounds

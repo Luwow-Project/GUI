@@ -1,6 +1,6 @@
 local gui = require("@Luwow/gui")
 
-local window = gui.createWindow({
+local window = gui.createComponent({
   Type = "Window" :: "Window",
   Title = "Luwow Created Window",
   Size = { 400, 300 },
@@ -124,7 +124,7 @@ local nameBox = window:add({
   Text = "",
   Size = { 200, 24 },
   Position = { 110, 38 },
-})
+}) :: gui.TextBox
 
 local _notesLabel = window:add({
   Type = "TextLabel" :: "TextLabel",
@@ -138,7 +138,7 @@ local notesArea = window:add({
   Text = "",
   Size = { 280, 100 },
   Position = { 40, 104 },
-})
+}) :: gui.TextArea
 
 nameBox:bindToPropertyChanged("Text"):Connect(function(text)
   print("Name changed: " .. text)

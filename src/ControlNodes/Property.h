@@ -13,7 +13,7 @@
 namespace Luwow::Gui {
 
 // A property of the ControlNode N, kept in a field of its descriptor. N's list of them is all there
-// is to its properties: reading its descriptor, describing it, and the handle's getters and setters.
+// is to its properties: reading its descriptor, and the handle's getters and setters.
 template <typename N>
 struct Property {
     using Descriptor = std::remove_cvref_t<decltype(std::declval<N&>().properties)>;
@@ -80,15 +80,6 @@ void readDescriptor(lua_State* L, int index, typename Property<N>::Descriptor& d
             luaL_error(L, "%s descriptor's %s must be %s", N::TypeName, property.name, property.expected);
         }
         lua_pop(L, 1);
-    }
-}
-
-// Sets N's properties as fields of the descriptor table on top of the stack
-template <typename N>
-void describeProperties(lua_State* L, const N& node) {
-    for (const Property<N>& property : N::GetProperties()) {
-        property.push(L, node.properties);
-        lua_setfield(L, -2, property.name);
     }
 }
 

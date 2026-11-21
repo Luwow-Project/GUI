@@ -45,6 +45,10 @@ struct NodeTypes {
         return node;
     }
 
+    static bool has(const std::string& type) {
+        return ((type == ControlNodes::TypeName) || ...);
+    }
+
     static void registerHandles(lua_State* L) {
         (Handle<ControlNodes>::Register(L), ...);
     }
@@ -92,6 +96,61 @@ void destroyNode(lua_State* L, Node& node) {
     node.destroyControl();
     releaseSignals(L, node);
     node.alive = false;
+}
+
+std::shared_ptr<Node> buildTree(lua_State* L, int index, IGuiModule* gui, Node* parent, size_t position, const char* key = nullptr);
+
+// Raises why child can't go under parent: a kind parent doesn't take, a name a sibling has, or a closed
+// window
+void checkChild(lua_State* L, Node& parent, const Node& child, const std::string& name) {
+    std::string refusal = parent.refuseChild(child);
+    if (!refusal.empty()) luaL_error(L, "%s", refusal.c_str());
+    if (!name.empty() && childNamed(parent, name.c_str())) {
+        luaL_error(L, "the %s already has a child named '%s'", parent.typeName(), name.c_str());
+    }
+    if (ControlNode::Window::isClosed(parent)) {
+        luaL_error(L, "can't add a %s to a closed window", child.typeName());
+    }
+}
+
+// Makes the controls of the node's tree, the node's at position among its parent's children
+void realize(lua_State* L, Node& node, size_t position) {
+    node.createControl(L, node.parent, position);
+    if (const char* event = node.activationEvent()) {
+        std::weak_ptr<Node> weak = node.shared_from_this();
+        node.activatable()->onActivated = [weak, event] {
+            std::shared_ptr<Node> node = weak.lock();
+            if (!node || !node->alive || !luauHost) return;
+            Luwow::Engine::StateLock lock(luauHost);
+            fireSignal(luauHost->getMainState(), *node, event, 0);
+        };
+    }
+    for (size_t i = 0; i < node.children.size(); ++i) {
+        realize(L, *node.children[i], i);
+    }
+}
+
+// Takes a node that failed partway away again
+void undo(lua_State* L, const std::shared_ptr<Node>& node) {
+    destroyNode(L, *node);
+    if (Node* parent = node->parent) {
+        auto& siblings = parent->children;
+        auto it = std::find(siblings.begin(), siblings.end(), node);
+        if (it != siblings.end()) siblings.erase(it);
+    }
+    node->parent = nullptr;
+}
+
+// Makes the controls of a window's tree, or of a tree just put in an open window
+void realizeIfInWindow(lua_State* L, const std::shared_ptr<Node>& node, size_t position) {
+    bool window = dynamic_cast<ControlNode::Window*>(node.get()) != nullptr;
+    if (!window && !(node->parent && ControlNode::Window::containing(*node->parent))) return;
+    try {
+        realize(L, *node, position);
+    } catch (...) {
+        undo(L, node);
+        throw;
+    }
 }
 
 // Builds a node's Children table at index: an array of descriptors with optional Names, and descriptors
@@ -148,11 +207,11 @@ void buildChildren(lua_State* L, int index, IGuiModule* gui, Node& node) {
     for (const Entry& entry : entries) {
         if (entry.position > 0) {
             lua_rawgeti(L, index, entry.position);
-            buildNode(L, -1, gui, &node, node.children.size());
+            buildTree(L, -1, gui, &node, node.children.size());
         } else {
             lua_pushlstring(L, entry.key.data(), entry.key.size());
             lua_rawget(L, index);
-            buildNode(L, -1, gui, &node, node.children.size(), entry.key.c_str());
+            buildTree(L, -1, gui, &node, node.children.size(), entry.key.c_str());
         }
         lua_pop(L, 1);
     }
@@ -193,6 +252,14 @@ void fireSignal(lua_State* L, Node& node, const std::string& key, int nargs) {
     lua_insert(L, -(nargs + 1));
     Signals::fireSignal(L, -(nargs + 1), nargs);
     lua_pop(L, 1);
+}
+
+bool isNodeType(const std::string& className) {
+    return AllNodeTypes::has(className);
+}
+
+std::string nodeTypeNames() {
+    return AllNodeTypes::names();
 }
 
 // The tree
@@ -276,31 +343,16 @@ std::shared_ptr<Node> nodeArg(lua_State* L, int index) {
     return AllNodeTypes::fromHandle(L, index);
 }
 
-void pushDescription(lua_State* L, Node& node) {
-    lua_createtable(L, 0, 8);
-    lua_pushstring(L, node.typeName());
-    lua_setfield(L, -2, "Type");
-    if (!node.name.empty()) {
-        lua_pushlstring(L, node.name.data(), node.name.size());
-        lua_setfield(L, -2, "Name");
-    }
-    if (node.order != 0) {
-        lua_pushnumber(L, node.order);
-        lua_setfield(L, -2, "Order");
-    }
-    node.describe(L);
-    if (node.takesChildren()) {
-        lua_createtable(L, (int)node.children.size(), 0);
-        for (size_t i = 0; i < node.children.size(); ++i) {
-            pushDescription(L, *node.children[i]);
-            lua_rawseti(L, -2, (int)i + 1);
-        }
-        lua_setfield(L, -2, "Children");
-    }
+std::string Node::refuseChild(const Node& child) const {
+    if (acceptsChild(child)) return {};
+    return std::string("a ") + child.typeName() + " can't be a child of a " + typeName();
 }
 
-// A node that fails partway is taken away again
-std::shared_ptr<Node> buildNode(lua_State* L, int index, IGuiModule* gui, Node* parent, size_t position, const char* key) {
+namespace {
+
+// The node of the descriptor at index with its Children, without controls. A node that fails partway is
+// taken away again.
+std::shared_ptr<Node> buildTree(lua_State* L, int index, IGuiModule* gui, Node* parent, size_t position, const char* key) {
     index = lua_absindex(L, index);
     if (!lua_istable(L, index)) {
         luaL_error(L, "a descriptor must be a table, got %s", luaL_typename(L, index));
@@ -313,10 +365,6 @@ std::shared_ptr<Node> buildNode(lua_State* L, int index, IGuiModule* gui, Node* 
     std::string type = lua_tostring(L, -1);
     lua_pop(L, 1);
     std::shared_ptr<Node> node = makeNode(L, type, gui);
-
-    if (parent && !parent->acceptsChild(*node)) {
-        luaL_error(L, "a %s can't be a child of a %s", type.c_str(), parent->typeName());
-    }
 
     std::string name;
     lua_getfield(L, index, "Name");
@@ -340,15 +388,7 @@ std::shared_ptr<Node> buildNode(lua_State* L, int index, IGuiModule* gui, Node* 
         order = lua_tonumber(L, -1);
     }
     lua_pop(L, 1);
-    if (parent && !name.empty()) {
-        const auto& members = parent->memberNames();
-        if (members.find(name) != members.end()) {
-            luaL_error(L, "a child can't be named '%s', a member of %s", name.c_str(), parent->typeName());
-        }
-        if (childNamed(*parent, name.c_str())) {
-            luaL_error(L, "the %s already has a child named '%s'", parent->typeName(), name.c_str());
-        }
-    }
+    if (parent) checkChild(L, *parent, *node, name);
 
     if (!node->takesChildren()) {
         lua_getfield(L, index, "Children");
@@ -357,12 +397,7 @@ std::shared_ptr<Node> buildNode(lua_State* L, int index, IGuiModule* gui, Node* 
         if (hasChildren) luaL_error(L, "%s descriptors don't take Children", type.c_str());
     }
 
-    if (parent && !ControlNode::Window::containing(*parent)) {
-        luaL_error(L, "can't add a %s to a closed window", type.c_str());
-    }
-
     node->readProperties(L, index);
-    node->createControl(L, parent, position);
     node->name = name;
     node->order = order;
     node->parent = parent;
@@ -370,14 +405,6 @@ std::shared_ptr<Node> buildNode(lua_State* L, int index, IGuiModule* gui, Node* 
 
     try {
         if (const char* event = node->activationEvent()) {
-            std::weak_ptr<Node> weak = node;
-            node->activatable()->onActivated = [weak, event] {
-                std::shared_ptr<Node> node = weak.lock();
-                if (!node || !node->alive || !luauHost) return;
-                Luwow::Engine::StateLock lock(luauHost);
-                fireSignal(luauHost->getMainState(), *node, event, 0);
-            };
-
             // A handler in the descriptor is connected to the event's signal
             lua_getfield(L, index, event);
             if (lua_isfunction(L, -1)) {
@@ -396,17 +423,36 @@ std::shared_ptr<Node> buildNode(lua_State* L, int index, IGuiModule* gui, Node* 
             lua_pop(L, 1);
         }
     } catch (...) {
-        destroyNode(L, *node);
-        if (parent) {
-            auto& siblings = parent->children;
-            auto it = std::find(siblings.begin(), siblings.end(), node);
-            if (it != siblings.end()) siblings.erase(it);
-        }
-        node->parent = nullptr;
+        undo(L, node);
         throw;
     }
 
     return node;
+}
+
+} // namespace
+
+std::shared_ptr<Node> buildNode(lua_State* L, int index, IGuiModule* gui, Node* parent, size_t position, const char* key) {
+    std::shared_ptr<Node> node = buildTree(L, index, gui, parent, position, key);
+    realizeIfInWindow(L, node, position);
+    return node;
+}
+
+void attachNode(lua_State* L, const std::shared_ptr<Node>& node, Node& parent, size_t position) {
+    if (node->parent) luaL_error(L, "the %s already has a parent", node->typeName());
+    for (Node* ancestor = &parent; ancestor; ancestor = ancestor->parent) {
+        if (ancestor == node.get()) luaL_error(L, "can't add a %s under itself", node->typeName());
+    }
+    checkChild(L, parent, *node, node->name);
+    node->parent = &parent;
+    parent.children.insert(parent.children.begin() + (std::ptrdiff_t)position, node);
+    realizeIfInWindow(L, node, position);
+}
+
+int createComponent(lua_State* L, IGuiModule* gui) {
+    luaL_checktype(L, 1, LUA_TTABLE);
+    pushNode(L, buildNode(L, 1, gui, nullptr, 0));
+    return 1;
 }
 
 void registerNodes(lua_State* L, ILuauHost* host, IGuiModule* gui) {

@@ -14,10 +14,6 @@ const Properties<Menu>& Menu::GetProperties() {
     return properties;
 }
 
-const std::unordered_set<std::string>& Menu::memberNames() const {
-    return Handle<Menu>::Members();
-}
-
 void Menu::pushHandle(lua_State* L) {
     Handle<Menu>::Push(L, shared_from_this());
 }
@@ -28,10 +24,6 @@ bool Menu::acceptsChild(const Node& child) const {
 
 void Menu::readProperties(lua_State* L, int index) {
     readDescriptor<Menu>(L, index, properties);
-}
-
-void Menu::describe(lua_State* L) const {
-    describeProperties(L, *this);
 }
 
 void Menu::createControl(lua_State* L, Node* parent, size_t position) {

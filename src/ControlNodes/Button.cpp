@@ -24,20 +24,12 @@ const Properties<Button>& Button::GetProperties() {
     return properties;
 }
 
-const std::unordered_set<std::string>& Button::memberNames() const {
-    return Handle<Button>::Members();
-}
-
 void Button::pushHandle(lua_State* L) {
     Handle<Button>::Push(L, shared_from_this());
 }
 
 void Button::readProperties(lua_State* L, int index) {
     readDescriptor<Button>(L, index, properties);
-}
-
-void Button::describe(lua_State* L) const {
-    describeProperties(L, *this);
 }
 
 void Button::createControl(lua_State* L, Node* parent, size_t position) {

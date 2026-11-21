@@ -19,19 +19,18 @@ public:
         };
     }
 
-    // gui.createWindow(descriptor), and the Window node of its descriptor's tree
-    static int create(lua_State* L, IGuiModule* gui);
-    // The control of the window the node is in, nullptr once it's closed
+    // The control of the window the node is in, nullptr once it's closed or when the node is detached
     static IWindow* containing(const Node& node);
+    // Whether the node is in a window that's closed
+    static bool isClosed(const Node& node);
 
     using Node::Node;
     const char* typeName() const override { return TypeName; }
-    const std::unordered_set<std::string>& memberNames() const override;
     void pushHandle(lua_State* L) override;
     bool takesChildren() const override { return true; }
     bool acceptsChild(const Node& child) const override;
+    std::string refuseChild(const Node& child) const override;
     void readProperties(lua_State* L, int index) override;
-    void describe(lua_State* L) const override;
     void createControl(lua_State* L, Node* parent, size_t position) override;
     void destroyControl() override { control.reset(); }
     void sync(lua_State* L) override;

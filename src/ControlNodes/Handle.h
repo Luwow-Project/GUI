@@ -45,15 +45,16 @@ public:
     }
 
     // Does nothing when the value is what the property is, and otherwise gives it to the control and fires
-    // the Changed signals of the properties that end up changed. The platform may adjust the value.
+    // the Changed signals of the properties that end up changed. The platform may adjust the value. A
+    // detached node keeps it for the control it gets.
     int setProperty(lua_State* L) {
         N& node = self(L);
         const Property<N>& property = find(L);
-        node.sync(L);
+        if (node.control) node.sync(L);
         typename Property<N>::Descriptor before = node.properties;
         if (!property.read(L, 3, node.properties)) luaL_error(L, "%s must be %s", property.name, property.expected);
         if (property.same(before, node.properties)) return 0;
-        property.apply(node);
+        if (node.control) property.apply(node);
         fireChanges(L, node, before);
         return 0;
     }
@@ -85,12 +86,6 @@ public:
         return 1;
     }
 
-    // node:getDescription(), a descriptor of the node as it is now, its children's included
-    int getDescription(lua_State* L) {
-        pushDescription(L, self(L));
-        return 1;
-    }
-
     // node:getChildren(), in order
     int getChildren(lua_State* L) {
         Node& node = self(L);
@@ -98,6 +93,21 @@ public:
         for (size_t i = 0; i < node.children.size(); ++i) {
             pushNode(L, node.children[i]);
             lua_rawseti(L, -2, (int)i + 1);
+        }
+        return 1;
+    }
+
+    // node:getChildrenWhichIsA(className), the children of that ClassName, in order
+    int getChildrenWhichIsA(lua_State* L) {
+        Node& node = self(L);
+        const char* className = luaL_checkstring(L, 2);
+        if (!isNodeType(className)) luaL_error(L, "'%s' isn't a class of node, expected %s", className, nodeTypeNames().c_str());
+        lua_createtable(L, 0, 0);
+        int count = 0;
+        for (const std::shared_ptr<Node>& child : node.children) {
+            if (std::string(child->typeName()) != className) continue;
+            pushNode(L, child);
+            lua_rawseti(L, -2, ++count);
         }
         return 1;
     }
@@ -114,12 +124,17 @@ public:
         return 1;
     }
 
-    // node:add(descriptor, at?), the new child, at a 1-based position or before a child, the end by default
+    // node:add(child, at?), a descriptor or a detached node, at a 1-based position or before a child, the end
+    // by default. Returns the child.
     int add(lua_State* L) {
         Node& node = self(L);
-        luaL_checktype(L, 2, LUA_TTABLE);
+        std::shared_ptr<Node> child = nodeArg(L, 2);
+        if (!child) luaL_checktype(L, 2, LUA_TTABLE);
+        else if (!child->alive) luaL_error(L, "the %s was removed", child->typeName());
         size_t position = lua_isnoneornil(L, 3) ? node.children.size() : positionOf(L, node, 3, true);
-        pushNode(L, buildNode(L, 2, node.module, &node, position));
+        if (child) attachNode(L, child, node, position);
+        else child = buildNode(L, 2, node.module, &node, position);
+        pushNode(L, child);
         return 1;
     }
 
@@ -130,11 +145,11 @@ public:
         return 0;
     }
 
-    // Registers the handle class, and makes node.ChildName find a child
+    // Registers the handle class
     static void Register(lua_State* L) {
         std::vector<MethodDef> methods = {
-            { "getDescription", &Handle::getDescription },
             { "getChildren", &Handle::getChildren },
+            { "getChildrenWhichIsA", &Handle::getChildrenWhichIsA },
             { "bindToPropertyChanged", &Handle::bindToPropertyChanged },
         };
         // A node made only to ask what every node of N has
@@ -156,24 +171,17 @@ public:
             properties.push_back({ property.name, &Handle::getProperty, &Handle::setProperty });
         }
 
-        auto& members = Members();
-        for (const MethodDef& method : methods) members.insert(method.name);
-        for (const PropertyDef& property : properties) {
-            members.insert(property.name);
-            PropertyNames().insert(property.name);
-        }
+        for (const PropertyDef& property : properties) PropertyNames().insert(property.name);
         if (const char* event = prototype.activationEvent()) {
             properties.push_back({ event, &Handle::getEvent, nullptr });
-            members.insert(event);
         }
 
         Luwow::Engine::Userdata<Handle>::Register(L, methods, properties);
 
-        // The generated __index runs when the key isn't a child's name. Methods and setters touch the
-        // controls, which other threads have the main thread run.
+        // Methods and setters touch the controls, which other threads have the main thread run
         luaL_getmetatable(L, Name);
         lua_getfield(L, -1, "__index");
-        lua_pushcclosure(L, IndexChildren, Name, 1);
+        lua_pushcclosure(L, IndexMethods, Name, 1);
         lua_setfield(L, -2, "__index");
         for (const char* metamethod : { "__namecall", "__newindex" }) {
             lua_getfield(L, -1, metamethod);
@@ -181,12 +189,6 @@ public:
             lua_setfield(L, -2, metamethod);
         }
         lua_pop(L, 1);
-    }
-
-    // N's properties and methods, which a child's name can't take
-    static std::unordered_set<std::string>& Members() {
-        static std::unordered_set<std::string> members;
-        return members;
     }
 
     // The node of the handle of N's at index, nullptr when it's anything else
@@ -215,19 +217,12 @@ private:
         return N::GetProperties().front();
     }
 
-    static int IndexChildren(lua_State* L) {
-        Handle* handle = Handle::Check(L, 1);
-        if (lua_type(L, 2) == LUA_TSTRING && handle->node->alive) {
-            if (std::shared_ptr<Node> child = childNamed(*handle->node, lua_tostring(L, 2))) {
-                pushNode(L, child);
-                return 1;
-            }
-        }
+    // The generated __index, with node.method run on the main thread like node:method()
+    static int IndexMethods(lua_State* L) {
         lua_pushvalue(L, lua_upvalueindex(1));
         lua_pushvalue(L, 1);
         lua_pushvalue(L, 2);
         lua_call(L, 2, 1);
-        // node.method, for calls without the colon
         if (lua_iscfunction(L, -1)) lua_pushcclosure(L, OnMainThread, "method", 1);
         return 1;
     }

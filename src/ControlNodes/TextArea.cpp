@@ -25,20 +25,12 @@ const Properties<TextArea>& TextArea::GetProperties() {
     return properties;
 }
 
-const std::unordered_set<std::string>& TextArea::memberNames() const {
-    return Handle<TextArea>::Members();
-}
-
 void TextArea::pushHandle(lua_State* L) {
     Handle<TextArea>::Push(L, shared_from_this());
 }
 
 void TextArea::readProperties(lua_State* L, int index) {
     readDescriptor<TextArea>(L, index, properties);
-}
-
-void TextArea::describe(lua_State* L) const {
-    describeProperties(L, *this);
 }
 
 void TextArea::createControl(lua_State* L, Node* parent, size_t position) {

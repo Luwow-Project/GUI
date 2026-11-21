@@ -36,8 +36,8 @@ GuiModule* getModuleInstance(lua_State* L) {
     return gui;
 }
 
-int createWindowNow(lua_State* L) {
-    return ControlNode::Window::create(L, getModuleInstance(L));
+int createComponentNow(lua_State* L) {
+    return Luwow::Gui::createComponent(L, getModuleInstance(L));
 }
 
 // gui.showFileDialog(descriptor, parent?), the chosen paths, nil when it's cancelled
@@ -63,8 +63,8 @@ int showFileDialogNow(lua_State* L) {
 }
 
 // Called from another thread, the functions run on the main thread while the caller waits
-int createWindowExport(lua_State* L) {
-    return callOnMainThread(L, createWindowNow);
+int createComponentExport(lua_State* L) {
+    return callOnMainThread(L, createComponentNow);
 }
 
 int showFileDialogExport(lua_State* L) {
@@ -72,7 +72,7 @@ int showFileDialogExport(lua_State* L) {
 }
 
 LuauExport exports[] = {
-    { "createWindow", createWindowExport },
+    { "createComponent", createComponentExport },
     { "showFileDialog", showFileDialogExport },
     { nullptr, nullptr }
 };

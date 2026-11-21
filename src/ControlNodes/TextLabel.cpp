@@ -24,20 +24,12 @@ const Properties<TextLabel>& TextLabel::GetProperties() {
     return properties;
 }
 
-const std::unordered_set<std::string>& TextLabel::memberNames() const {
-    return Handle<TextLabel>::Members();
-}
-
 void TextLabel::pushHandle(lua_State* L) {
     Handle<TextLabel>::Push(L, shared_from_this());
 }
 
 void TextLabel::readProperties(lua_State* L, int index) {
     readDescriptor<TextLabel>(L, index, properties);
-}
-
-void TextLabel::describe(lua_State* L) const {
-    describeProperties(L, *this);
 }
 
 void TextLabel::createControl(lua_State* L, Node* parent, size_t position) {

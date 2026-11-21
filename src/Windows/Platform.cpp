@@ -48,10 +48,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
             IControl* control = window->getControl(commandId);
             if (!control) break;
             if (notification == BN_CLICKED) {
-                dynamic_cast<ICommandControl*>(control)->onCommand();
+                if (auto* command = dynamic_cast<ICommandControl*>(control)) command->onCommand();
             }
+            // An edit control made with text reports the change before its handler is set
             else if (notification == EN_CHANGE) {
-                dynamic_cast<ITextEditorControl*>(control)->onTextChanged();
+                auto* text = dynamic_cast<ITextEditorControl*>(control);
+                if (text && text->onTextChanged) text->onTextChanged();
             }
 
             break;
