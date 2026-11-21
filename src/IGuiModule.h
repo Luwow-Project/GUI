@@ -27,10 +27,6 @@ namespace Topics {
     // "<function> <context>", the decimal addresses of a void (*)(void*) and what it's called with. Result is 1
     // once it ran, and stays 0 when the main loop has ended.
     inline constexpr const char* RunOnMainThread = "gui-run-on-main-thread";
-    // Runs the main thread's events, its windows' and the work other threads post to it, for up to message.data
-    // milliseconds, so they go on while the main thread waits, such as for a script. Result is 1 once it ran, and
-    // stays 0 off the main thread. The task library requests it.
-    inline constexpr const char* MainThreadWait = "main-thread-wait";
 }
 
 class IControl {

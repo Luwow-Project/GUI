@@ -131,7 +131,7 @@ Luwow::Engine::ILuauModule* GuiModule::initialize(Luwow::Engine::ILuauHost* host
     registerControls(host->getMainState(), host, gui);
     host->handle(Topics::NativeHandle, nativeHandleRequest, gui);
     host->handle(Topics::RunOnMainThread, runOnMainThreadRequest, gui);
-    host->handle(Topics::MainThreadWait, mainThreadWaitRequest, gui);
+    host->handle(Luwow::Engine::Topics::MainThreadWait, mainThreadWaitRequest, gui);
     return gui;
 }
 
