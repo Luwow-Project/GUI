@@ -11,6 +11,7 @@ class MenuItem : public IMenuItem {
 public:
     MenuItem(const MenuItemDescriptor& descriptor, IWindow* parent);
     ~MenuItem() override;
+    void* getNativeHandle() const override { return owner; }
 
     void setTitle(const std::string& title) override;
 

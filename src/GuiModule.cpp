@@ -6,6 +6,8 @@
 #include "TextLabel.h"
 #include "TextBox.h"
 #include "TextArea.h"
+#include "Dropdown.h"
+#include "Checkbox.h"
 #include "MenuBar.h"
 #include "Menu.h"
 #include "MenuItem.h"
@@ -152,6 +154,14 @@ ITextBox* GuiModule::createTextBox(const TextBoxDescriptor& descriptor, IWindow*
 
 ITextArea* GuiModule::createTextArea(const TextAreaDescriptor& descriptor, IWindow* window) {
     return new TextArea(descriptor, window);
+}
+
+IDropdown* GuiModule::createDropdown(const DropdownDescriptor& descriptor, IWindow* window) {
+    return new Dropdown(descriptor, window);
+}
+
+ICheckbox* GuiModule::createCheckbox(const CheckboxDescriptor& descriptor, IWindow* window) {
+    return new Checkbox(descriptor, window);
 }
 
 IMenuBar* GuiModule::createMenuBar(IWindow* window) {

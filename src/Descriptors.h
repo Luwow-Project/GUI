@@ -68,6 +68,25 @@ struct TextAreaDescriptor {
     int Top = 0;
 };
 
+struct DropdownDescriptor {
+    std::vector<std::string> Items;
+    // 1-based, 0 for no item
+    int SelectedIndex = 0;
+    int Width = 0;
+    int Height = 0;
+    int Left = 0;
+    int Top = 0;
+};
+
+struct CheckboxDescriptor {
+    std::string Caption = "";
+    bool Checked = false;
+    int Width = 0;
+    int Height = 0;
+    int Left = 0;
+    int Top = 0;
+};
+
 struct MenuBarDescriptor {};
 
 struct MenuDescriptor {

@@ -1,7 +1,6 @@
 #include "TextBox.h"
 #include "Handle.h"
 #include "Window.h"
-#include "ILuauHost.h"
 
 namespace Luwow::Gui::ControlNode {
 
@@ -37,15 +36,7 @@ void TextBox::createNative(lua_State* L, Control* parent, size_t position) {
     (void)L;
     (void)position;
     native.reset(module->createTextBox(properties, Window::containing(*parent)));
-
-    std::weak_ptr<Control> weak = shared_from_this();
-    native->onTextChanged = [weak] {
-        std::shared_ptr<Control> control = weak.lock();
-        Luwow::Engine::ILuauHost* host = controlHost();
-        if (!control || !control->alive || !host) return;
-        Luwow::Engine::StateLock lock(host);
-        static_cast<TextBox&>(*control).sync(host->getMainState());
-    };
+    native->onTextChanged = syncHandler(*this);
 }
 
 void TextBox::sync(lua_State* L) {

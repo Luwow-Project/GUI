@@ -12,6 +12,7 @@ class Menu : public IMenu {
 public:
     explicit Menu(const MenuDescriptor& descriptor);
     ~Menu() override;
+    void* getNativeHandle() const override { return popup->gobj(); }
 
     void setTitle(const std::string& title) override;
     void insertItem(size_t index, IMenuItem* item) override;

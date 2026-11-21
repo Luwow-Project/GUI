@@ -2,6 +2,7 @@
 
 #include "IGuiModule.h"
 #include <cstddef>
+#include <functional>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -62,6 +63,9 @@ public:
 
 // The host the controls' state belongs to
 Luwow::Engine::ILuauHost* controlHost();
+
+// The handler a native control runs when the user changes it, which brings the control's properties up to date
+std::function<void()> syncHandler(Control& control);
 
 // Whether className is a control's ClassName, and the ClassNames as "A, B or C"
 bool isControlType(const std::string& className);

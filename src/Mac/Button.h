@@ -10,6 +10,7 @@ class Button : public IButton {
 public:
     Button(const ButtonDescriptor& descriptor, IWindow* parent);
     ~Button() override;
+    void* getNativeHandle() const override { return nativeButton; }
 
     void setCaption(const std::string& caption) override;
     void setBounds(int left, int top, int width, int height) override;

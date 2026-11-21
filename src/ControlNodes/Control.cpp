@@ -4,6 +4,8 @@
 #include "TextLabel.h"
 #include "TextBox.h"
 #include "TextArea.h"
+#include "Dropdown.h"
+#include "Checkbox.h"
 #include "MenuBar.h"
 #include "Menu.h"
 #include "MenuItem.h"
@@ -71,6 +73,8 @@ using AllControlTypes = ControlTypes<
     ControlNode::TextLabel,
     ControlNode::TextBox,
     ControlNode::TextArea,
+    ControlNode::Dropdown,
+    ControlNode::Checkbox,
     ControlNode::MenuBar,
     ControlNode::Menu,
     ControlNode::MenuItem
@@ -228,6 +232,16 @@ std::shared_ptr<Control> makeControl(lua_State* L, const std::string& type, IGui
 
 ILuauHost* controlHost() {
     return luauHost;
+}
+
+std::function<void()> syncHandler(Control& control) {
+    std::weak_ptr<Control> weak = control.shared_from_this();
+    return [weak] {
+        std::shared_ptr<Control> control = weak.lock();
+        if (!control || !control->alive || !luauHost) return;
+        Luwow::Engine::StateLock lock(luauHost);
+        control->sync(luauHost->getMainState());
+    };
 }
 
 // Signals

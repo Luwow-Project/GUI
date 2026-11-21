@@ -40,7 +40,7 @@ export type WindowDescriptor = {
 	read Title: string,
 	read Size: Vector?,
 	read Position: Vector?,
-	read Children: Children<ButtonDescriptor | TextLabelDescriptor | TextBoxDescriptor | TextAreaDescriptor | MenuBarDescriptor>?,
+	read Children: Children<ButtonDescriptor | TextLabelDescriptor | TextBoxDescriptor | TextAreaDescriptor | DropdownDescriptor | CheckboxDescriptor | MenuBarDescriptor>?,
 }
 
 export type ButtonDescriptor = {
@@ -81,6 +81,27 @@ export type TextAreaDescriptor = {
 	read Position: Vector?,
 }
 
+export type DropdownDescriptor = {
+	read Type: "Dropdown",
+	read Name: string?,
+	read Order: number?,
+	read Items: { string }?,
+	-- The 1-based position of the item selected, 0 for none
+	read SelectedIndex: number?,
+	read Size: Vector?,
+	read Position: Vector?,
+}
+
+export type CheckboxDescriptor = {
+	read Type: "Checkbox",
+	read Name: string?,
+	read Order: number?,
+	read Caption: string,
+	read Checked: boolean?,
+	read Size: Vector?,
+	read Position: Vector?,
+}
+
 export type MenuItemDescriptor = {
 	read Type: "MenuItem",
 	read Name: string?,
@@ -105,7 +126,7 @@ export type MenuBarDescriptor = {
 	read Children: Children<MenuDescriptor>?,
 }
 
-export type Descriptor = WindowDescriptor | ButtonDescriptor | TextLabelDescriptor | TextBoxDescriptor | TextAreaDescriptor | MenuBarDescriptor | MenuDescriptor | MenuItemDescriptor
+export type Descriptor = WindowDescriptor | ButtonDescriptor | TextLabelDescriptor | TextBoxDescriptor | TextAreaDescriptor | DropdownDescriptor | CheckboxDescriptor | MenuBarDescriptor | MenuDescriptor | MenuItemDescriptor
 
 export type FileDialogFilter = {
 	Name: string,
@@ -147,6 +168,8 @@ export type Control = {
 		& ((self: Control, type: "TextLabel") -> { TextLabel })
 		& ((self: Control, type: "TextBox") -> { TextBox })
 		& ((self: Control, type: "TextArea") -> { TextArea })
+		& ((self: Control, type: "Dropdown") -> { Dropdown })
+		& ((self: Control, type: "Checkbox") -> { Checkbox })
 		& ((self: Control, type: "MenuBar") -> { MenuBar })
 		& ((self: Control, type: "Menu") -> { Menu })
 		& ((self: Control, type: "MenuItem") -> { MenuItem }),
@@ -165,7 +188,7 @@ export type Window = Control & {
 	Position: Vector,
 
 	--[=[
-		Adds a Button, text control or MenuBar: a descriptor made into a new control, its own Children too, or a
+		Adds a Button, text control, Dropdown, Checkbox or MenuBar: a descriptor made into a new control, its own Children too, or a
 		detached control from gui.createComponent.
 
 		@param child The child's descriptor, or a detached control.
@@ -175,9 +198,9 @@ export type Window = Control & {
 	]=]
 	add: (
 		self: Window,
-		child: ButtonDescriptor | Button | TextLabelDescriptor | TextLabel | TextBoxDescriptor | TextBox | TextAreaDescriptor | TextArea | MenuBarDescriptor | MenuBar,
+		child: ButtonDescriptor | Button | TextLabelDescriptor | TextLabel | TextBoxDescriptor | TextBox | TextAreaDescriptor | TextArea | DropdownDescriptor | Dropdown | CheckboxDescriptor | Checkbox | MenuBarDescriptor | MenuBar,
 		at: (number | Control)?
-	) -> Button | TextLabel | TextBox | TextArea | MenuBar,
+	) -> Button | TextLabel | TextBox | TextArea | Dropdown | Checkbox | MenuBar,
 
 	--[=[
 		Takes a child and its children away. Their controls can't be used after.
@@ -219,6 +242,28 @@ export type TextBox = Control & {
 
 export type TextArea = Control & {
 	Text: string,
+	Size: Vector,
+	Position: Vector,
+}
+
+--[=[
+	A list of items the user picks one of. Its SelectedIndex changes when they do, firing its Changed signal.
+]=]
+export type Dropdown = Control & {
+	-- A new table each time it's read. Setting a shorter list leaves no item selected when the selected one is gone.
+	Items: { string },
+	-- The 1-based position of the item selected, 0 for none
+	SelectedIndex: number,
+	Size: Vector,
+	Position: Vector,
+}
+
+--[=[
+	A check box with its caption. Its Checked changes when the user clicks it, firing its Changed signal.
+]=]
+export type Checkbox = Control & {
+	Caption: string,
+	Checked: boolean,
 	Size: Vector,
 	Position: Vector,
 }
@@ -291,6 +336,8 @@ gui.createComponent = (nil :: any) :: ((descriptor: WindowDescriptor) -> Window)
 	& ((descriptor: TextLabelDescriptor) -> TextLabel)
 	& ((descriptor: TextBoxDescriptor) -> TextBox)
 	& ((descriptor: TextAreaDescriptor) -> TextArea)
+	& ((descriptor: DropdownDescriptor) -> Dropdown)
+	& ((descriptor: CheckboxDescriptor) -> Checkbox)
 	& ((descriptor: MenuBarDescriptor) -> MenuBar)
 	& ((descriptor: MenuDescriptor) -> Menu)
 	& ((descriptor: MenuItemDescriptor) -> MenuItem)

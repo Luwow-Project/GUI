@@ -11,6 +11,7 @@ class Button : public IButton {
 public:
     Button(const ButtonDescriptor& descriptor, IWindow* parent);
     ~Button();
+    void* getNativeHandle() const override { return hButton; }
 
     void setCaption(const std::string& caption) override;
     void setBounds(int left, int top, int width, int height) override;

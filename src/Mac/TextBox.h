@@ -10,6 +10,7 @@ class TextBox : public ITextBox {
 public:
     TextBox(const TextBoxDescriptor& descriptor, IWindow* parent);
     ~TextBox() override;
+    void* getNativeHandle() const override { return nativeField; }
 
     void setText(const std::string& text) override;
     std::string getText() const override;

@@ -54,6 +54,23 @@ Property<N> stringProperty(const char* name, void (*apply)(N&), bool required = 
     };
 }
 
+// An optional boolean property
+template <typename N, auto Field>
+Property<N> boolProperty(const char* name, void (*apply)(N&)) {
+    using D = typename Property<N>::Descriptor;
+    return {
+        name, "a boolean", false,
+        [](lua_State* L, int index, D& descriptor) {
+            if (!lua_isboolean(L, index)) return false;
+            descriptor.*Field = lua_toboolean(L, index) != 0;
+            return true;
+        },
+        [](lua_State* L, const D& descriptor) { lua_pushboolean(L, descriptor.*Field); },
+        [](const D& a, const D& b) { return a.*Field == b.*Field; },
+        apply,
+    };
+}
+
 // An optional {x, y} or {width, height}, a new table each time it's read
 template <typename N, auto First, auto Second>
 Property<N> pairProperty(const char* name, void (*apply)(N&)) {

@@ -10,6 +10,7 @@ class TextArea : public ITextArea {
 public:
     TextArea(const TextAreaDescriptor& descriptor, IWindow* parent);
     ~TextArea() override;
+    void* getNativeHandle() const override { return nativeTextView; }
 
     void setText(const std::string& text) override;
     std::string getText() const override;

@@ -14,6 +14,7 @@ class TextArea : public ITextArea {
 public:
     TextArea(const TextAreaDescriptor& descriptor, IWindow* parent);
     ~TextArea() override;
+    void* getNativeHandle() const override { return textView->gobj(); }
 
     void setText(const std::string& text) override;
     std::string getText() const override;
@@ -24,6 +25,8 @@ private:
     Gtk::ScrolledWindow* scrolled = nullptr;
     Gtk::TextView* textView = nullptr;
     sigc::connection changed;
+    sigc::connection scrolledVertically;
+    sigc::connection scrolledHorizontally;
     bool updating = false;
 };
 

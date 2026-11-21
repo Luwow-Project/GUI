@@ -12,6 +12,7 @@ class MenuBar : public IMenuBar {
 public:
     explicit MenuBar(IWindow* parent);
     ~MenuBar() override;
+    void* getNativeHandle() const override { return menuBar->gobj(); }
 
     void insertMenu(size_t index, IMenu* menu) override;
 

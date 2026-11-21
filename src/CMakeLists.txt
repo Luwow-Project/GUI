@@ -8,7 +8,7 @@ set(GUI_SOURCES
     ControlNodes/Handle.h
     ControlNodes/Property.h
 )
-foreach(node Control Window Button TextLabel TextBox TextArea MenuBar Menu MenuItem)
+foreach(node Control Window Button TextLabel TextBox TextArea Dropdown Checkbox MenuBar Menu MenuItem)
     list(APPEND GUI_SOURCES ControlNodes/${node}.cpp ControlNodes/${node}.h)
 endforeach()
 
@@ -39,7 +39,7 @@ elseif(UNIX)
 endif()
 
 # Each platform implements the same controls, and the main loop in its Platform file
-foreach(control Window Button TextLabel TextBox TextArea MenuBar Menu MenuItem FileDialog)
+foreach(control Window Button TextLabel TextBox TextArea Dropdown Checkbox MenuBar Menu MenuItem FileDialog)
     list(APPEND GUI_SOURCES ${GUI_PLATFORM}/${control}${GUI_PLATFORM_EXTENSION} ${GUI_PLATFORM}/${control}.h)
 endforeach()
 list(APPEND GUI_SOURCES ${GUI_PLATFORM}/Platform${GUI_PLATFORM_EXTENSION})

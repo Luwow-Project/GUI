@@ -13,6 +13,7 @@ class TextBox : public ITextBox {
 public:
     TextBox(const TextBoxDescriptor& descriptor, IWindow* parent);
     ~TextBox() override;
+    void* getNativeHandle() const override { return entry->gobj(); }
 
     void setText(const std::string& text) override;
     std::string getText() const override;
@@ -22,6 +23,7 @@ private:
     Window* window = nullptr;
     Gtk::Entry* entry = nullptr;
     sigc::connection changed;
+    sigc::connection scrolled;
     bool updating = false;
 };
 

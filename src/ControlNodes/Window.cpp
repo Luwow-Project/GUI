@@ -3,6 +3,8 @@
 #include "TextLabel.h"
 #include "TextBox.h"
 #include "TextArea.h"
+#include "Dropdown.h"
+#include "Checkbox.h"
 #include "MenuBar.h"
 #include "Handle.h"
 #include "ILuauHost.h"
@@ -39,6 +41,8 @@ bool Window::acceptsChild(const Control& child) const {
         || dynamic_cast<const TextLabel*>(&child)
         || dynamic_cast<const TextBox*>(&child)
         || dynamic_cast<const TextArea*>(&child)
+        || dynamic_cast<const Dropdown*>(&child)
+        || dynamic_cast<const Checkbox*>(&child)
         || dynamic_cast<const MenuBar*>(&child);
 }
 

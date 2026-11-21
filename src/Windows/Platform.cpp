@@ -47,14 +47,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
             uint16_t commandId = LOWORD(wParam);
             IControl* control = window->getControl(commandId);
             if (!control) break;
-            if (notification == BN_CLICKED) {
-                auto* command = dynamic_cast<ICommandControl*>(control);
-                if (command && command->onCommand) command->onCommand();
+            if (auto* command = dynamic_cast<ICommandControl*>(control)) {
+                if (notification == BN_CLICKED && command->onCommand) command->onCommand();
             }
             // An edit control made with text reports the change before its handler is set
-            else if (notification == EN_CHANGE) {
-                auto* text = dynamic_cast<ITextEditorControl*>(control);
-                if (text && text->onTextChanged) text->onTextChanged();
+            else if (auto* text = dynamic_cast<ITextEditorControl*>(control)) {
+                if (notification == EN_CHANGE && text->onTextChanged) text->onTextChanged();
+                else if ((notification == EN_VSCROLL || notification == EN_HSCROLL) && text->onScrolled) text->onScrolled();
+            }
+            else if (auto* dropdown = dynamic_cast<IDropdown*>(control)) {
+                if (notification == CBN_SELCHANGE && dropdown->onSelectionChanged) dropdown->onSelectionChanged();
             }
 
             break;

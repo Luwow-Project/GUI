@@ -27,10 +27,17 @@ TextArea::TextArea(const TextAreaDescriptor& descriptor, IWindow* parent) {
     changed = textView->get_buffer()->signal_changed().connect([this] {
         if (!updating && onTextChanged) onTextChanged();
     });
+    auto scroll = [this] {
+        if (onScrolled) onScrolled();
+    };
+    scrolledVertically = scrolled->get_vadjustment()->signal_value_changed().connect(scroll);
+    scrolledHorizontally = scrolled->get_hadjustment()->signal_value_changed().connect(scroll);
 }
 
 TextArea::~TextArea() {
     changed.disconnect();
+    scrolledVertically.disconnect();
+    scrolledHorizontally.disconnect();
     delete scrolled;
 }
 

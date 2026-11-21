@@ -30,6 +30,8 @@ public:
     ITextLabel* createTextLabel(const TextLabelDescriptor& descriptor, IWindow* window) override;
     ITextBox* createTextBox(const TextBoxDescriptor& descriptor, IWindow* window) override;
     ITextArea* createTextArea(const TextAreaDescriptor& descriptor, IWindow* window) override;
+    IDropdown* createDropdown(const DropdownDescriptor& descriptor, IWindow* window) override;
+    ICheckbox* createCheckbox(const CheckboxDescriptor& descriptor, IWindow* window) override;
     IMenuBar* createMenuBar(IWindow* window) override;
     IMenu* createMenu(const MenuDescriptor& descriptor) override;
     IMenuItem* createMenuItem(const MenuItemDescriptor& descriptor, IWindow* window) override;

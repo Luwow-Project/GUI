@@ -22,10 +22,14 @@ TextBox::TextBox(const TextBoxDescriptor& descriptor, IWindow* parent) {
     changed = entry->signal_changed().connect([this] {
         if (!updating && onTextChanged) onTextChanged();
     });
+    scrolled = entry->property_scroll_offset().signal_changed().connect([this] {
+        if (onScrolled) onScrolled();
+    });
 }
 
 TextBox::~TextBox() {
     changed.disconnect();
+    scrolled.disconnect();
     delete entry;
 }
 

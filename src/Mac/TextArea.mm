@@ -15,6 +15,10 @@
         self.cppTextArea->textChanged();
     }
 }
+- (void)boundsDidChange:(NSNotification*)notification {
+    (void)notification;
+    if (self.cppTextArea && self.cppTextArea->onScrolled) self.cppTextArea->onScrolled();
+}
 @end
 
 namespace Luwow::Gui {
@@ -53,6 +57,12 @@ TextArea::TextArea(const TextAreaDescriptor& descriptor, IWindow* parent) {
                                                  selector:@selector(textDidChange:)
                                                      name:NSTextDidChangeNotification
                                                    object:textView];
+        // The clip view's bounds move as the text scrolls
+        [[scroll contentView] setPostsBoundsChangedNotifications:YES];
+        [[NSNotificationCenter defaultCenter] addObserver:observer
+                                                 selector:@selector(boundsDidChange:)
+                                                     name:NSViewBoundsDidChangeNotification
+                                                   object:[scroll contentView]];
 
         [contentView addSubview:scroll];
 

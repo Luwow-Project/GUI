@@ -5,7 +5,7 @@
 
 namespace Luwow::Gui::ControlNode {
 
-// A window, the root of a tree, with buttons, text native controls and a menu bar as its children
+// A window, the root of a tree, with buttons, text controls, dropdowns, check boxes and a menu bar as its children
 class Window : public Control {
 public:
     static constexpr const char* TypeName = "Window";

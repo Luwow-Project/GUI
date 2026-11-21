@@ -20,6 +20,11 @@ namespace Luwow::Gui {
 class IControl {
 public:
     virtual ~IControl() = default;
+    // The platform's object of the native control, for other libraries to build on: an HWND on Windows, an
+    // NSView or NSWindow on macOS and a GtkWidget on Linux. A menu is an HMENU, NSMenu or GtkMenu, and a menu bar
+    // an HMENU, the application's NSMenu or a GtkMenuBar. A menu item is an NSMenuItem or GtkMenuItem, and on
+    // Windows, which has no object for an item, the HMENU of its menu, the item at its position there.
+    virtual void* getNativeHandle() const = 0;
 };
 
 // A control the user activates, such as a button or a menu item, which runs onCommand
@@ -28,13 +33,18 @@ public:
     std::function<void()> onCommand;
 };
 
+// A text field's events, which run on the main thread
 class ITextEditorControl : public IControl {
 public:
     virtual ~ITextEditorControl() = default;
+    // The user changed the text
     std::function<void()> onTextChanged;
+    // The text scrolled, by the user or as the text changed. Where the platform doesn't report it, it doesn't run:
+    // a TextBox on Windows and macOS.
+    std::function<void()> onScrolled;
 };
 
-class IWindow {
+class IWindow : public IControl {
 public:
     virtual ~IWindow() = default;
     // Runs on the main thread when the window is moved or resized, by the user or by setBounds
@@ -44,9 +54,6 @@ public:
     virtual void close() = 0;
     // Whether the window is still on screen, false once it's closed
     virtual bool isOpen() const = 0;
-    // The platform's window, an HWND on Windows, an NSWindow on macOS and a GtkWindow on Linux, for other
-    // libraries to draw into
-    virtual void* getNativeHandle() const = 0;
     virtual void setTitle(const std::string& title) = 0;
     virtual void setBounds(int left, int top, int width, int height) = 0;
     virtual void getBounds(int& left, int& top, int& width, int& height) const = 0;
@@ -60,14 +67,14 @@ public:
     virtual void setBounds(int left, int top, int width, int height) = 0;
 };
 
-class ITextLabel {
+class ITextLabel : public IControl {
 public:
     virtual ~ITextLabel() = default;
     virtual void setText(const std::string& text) = 0;
     virtual void setBounds(int left, int top, int width, int height) = 0;
 };
 
-// A single-line text field. onTextChanged runs on the main thread when the user edits it.
+// A single-line text field
 class ITextBox : public ITextEditorControl {
 public:
     virtual ~ITextBox() = default;
@@ -76,12 +83,34 @@ public:
     virtual void setBounds(int left, int top, int width, int height) = 0;
 };
 
-// A multi-line text field. onTextChanged runs on the main thread when the user edits it.
+// A multi-line text field
 class ITextArea : public ITextEditorControl {
 public:
     virtual ~ITextArea() = default;
     virtual void setText(const std::string& text) = 0;
     virtual std::string getText() const = 0;
+    virtual void setBounds(int left, int top, int width, int height) = 0;
+};
+
+// A list of items the user picks one of. Index is 0-based, -1 for no item. onSelectionChanged runs on the main
+// thread when the user picks one.
+class IDropdown : public IControl {
+public:
+    virtual ~IDropdown() = default;
+    std::function<void()> onSelectionChanged;
+    virtual void setItems(const std::vector<std::string>& items) = 0;
+    virtual void setSelected(int index) = 0;
+    virtual int getSelected() const = 0;
+    virtual void setBounds(int left, int top, int width, int height) = 0;
+};
+
+// A check box, which the user toggles by activating it
+class ICheckbox : public ICommandControl {
+public:
+    virtual ~ICheckbox() = default;
+    virtual void setCaption(const std::string& caption) = 0;
+    virtual void setChecked(bool checked) = 0;
+    virtual bool isChecked() const = 0;
     virtual void setBounds(int left, int top, int width, int height) = 0;
 };
 
@@ -91,14 +120,14 @@ public:
     virtual void setTitle(const std::string& title) = 0;
 };
 
-class IMenu {
+class IMenu : public IControl {
 public:
     virtual ~IMenu() = default;
     virtual void setTitle(const std::string& title) = 0;
     virtual void insertItem(size_t index, IMenuItem* item) = 0;
 };
 
-class IMenuBar {
+class IMenuBar : public IControl {
 public:
     virtual ~IMenuBar() = default;
     virtual void insertMenu(size_t index, IMenu* menu) = 0;
@@ -119,6 +148,8 @@ public:
     virtual ITextLabel* createTextLabel(const TextLabelDescriptor& descriptor, IWindow* window) = 0;
     virtual ITextBox* createTextBox(const TextBoxDescriptor& descriptor, IWindow* window) = 0;
     virtual ITextArea* createTextArea(const TextAreaDescriptor& descriptor, IWindow* window) = 0;
+    virtual IDropdown* createDropdown(const DropdownDescriptor& descriptor, IWindow* window) = 0;
+    virtual ICheckbox* createCheckbox(const CheckboxDescriptor& descriptor, IWindow* window) = 0;
     virtual IMenuBar* createMenuBar(IWindow* window) = 0;
     virtual IMenu* createMenu(const MenuDescriptor& descriptor) = 0;
     virtual IMenuItem* createMenuItem(const MenuItemDescriptor& descriptor, IWindow* window) = 0;
