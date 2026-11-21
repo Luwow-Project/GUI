@@ -20,10 +20,7 @@ namespace Luwow::Gui {
 class IControl {
 public:
     virtual ~IControl() = default;
-    // The platform's object of the native control, for other libraries to build on: an HWND on Windows, an
-    // NSView or NSWindow on macOS and a GtkWidget on Linux. A menu is an HMENU, NSMenu or GtkMenu, and a menu bar
-    // an HMENU, the application's NSMenu or a GtkMenuBar. A menu item is an NSMenuItem or GtkMenuItem, and on
-    // Windows, which has no object for an item, the HMENU of its menu, the item at its position there.
+    // The platform's object of the native control, for other libraries to build on.
     virtual void* getNativeHandle() const = 0;
 };
 
