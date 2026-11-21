@@ -71,6 +71,9 @@ std::function<void()> syncHandler(Control& control);
 bool isControlType(const std::string& className);
 std::string controlTypeNames();
 
+// The platform's object of the control's native control, nullptr while it's detached or its window is closed
+void* nativeHandle(Control& control);
+
 // The control's handle, the same userdata each time while one is held
 void pushControl(lua_State* L, const std::shared_ptr<Control>& control);
 // The control of a handle of any kind at index, nullptr for anything else

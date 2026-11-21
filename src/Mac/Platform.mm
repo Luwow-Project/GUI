@@ -28,6 +28,18 @@ bool GuiModule::post(const std::shared_ptr<MainThreadCall>& call) {
     return true;
 }
 
+// The main queue's blocks, which other threads post, run as the run loop waits for an event
+void GuiModule::runEvents(int milliseconds) {
+    @autoreleasepool {
+        NSDate* until = [NSDate dateWithTimeIntervalSinceNow:milliseconds / 1000.0];
+        NSEvent* event = [NSApp nextEventMatchingMask:NSEventMaskAny untilDate:until inMode:NSDefaultRunLoopMode dequeue:YES];
+        while (event) {
+            [NSApp sendEvent:event];
+            event = [NSApp nextEventMatchingMask:NSEventMaskAny untilDate:[NSDate distantPast] inMode:NSDefaultRunLoopMode dequeue:YES];
+        }
+    }
+}
+
 void GuiModule::runLoop() {
     @autoreleasepool {
         [NSApp activateIgnoringOtherApps:YES];

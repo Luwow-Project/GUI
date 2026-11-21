@@ -73,6 +73,17 @@ bool GuiModule::post(const std::shared_ptr<MainThreadCall>& call) {
     return true;
 }
 
+void GuiModule::runEvents(int milliseconds) {
+    bool timedOut = false;
+    guint timeout = g_timeout_add((guint)milliseconds, [](gpointer flag) -> gboolean {
+        *static_cast<bool*>(flag) = true;
+        return G_SOURCE_REMOVE;
+    }, &timedOut);
+    g_main_context_iteration(nullptr, TRUE);
+    while (g_main_context_iteration(nullptr, FALSE)) {}
+    if (!timedOut) g_source_remove(timeout);
+}
+
 void GuiModule::runLoop() {
     Gtk::Main::run();
 }

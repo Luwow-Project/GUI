@@ -47,6 +47,13 @@ struct ControlTypes {
         return control;
     }
 
+    static IControl* nativeOf(Control& control) {
+        IControl* native = nullptr;
+        std::string type = control.typeName();
+        ((native = !native && type == ControlNodes::TypeName ? static_cast<ControlNodes&>(control).native.get() : native), ...);
+        return native;
+    }
+
     static bool has(const std::string& type) {
         return ((type == ControlNodes::TypeName) || ...);
     }
@@ -270,6 +277,12 @@ void fireSignal(lua_State* L, Control& control, const std::string& key, int narg
 
 bool isControlType(const std::string& className) {
     return AllControlTypes::has(className);
+}
+
+void* nativeHandle(Control& control) {
+    if (!ControlNode::Window::containing(control)) return nullptr;
+    IControl* native = AllControlTypes::nativeOf(control);
+    return native ? native->getNativeHandle() : nullptr;
 }
 
 std::string controlTypeNames() {

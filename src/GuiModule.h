@@ -24,6 +24,8 @@ public:
     bool runOnMainThread(const std::function<void()>& work) override;
     // Runs the main loop until the shown windows are closed, returning at once when none is shown
     void run() override;
+    // Runs the platform's events on the main thread for up to milliseconds, returning sooner once some ran
+    void runEvents(int milliseconds);
 
     IWindow* createWindow(const WindowDescriptor& descriptor) override;
     IButton* createButton(const ButtonDescriptor& descriptor, IWindow* window) override;

@@ -106,6 +106,20 @@ bool GuiModule::post(const std::shared_ptr<MainThreadCall>& call) {
     return true;
 }
 
+void GuiModule::runEvents(int milliseconds) {
+    MsgWaitForMultipleObjectsEx(0, nullptr, (DWORD)milliseconds, QS_ALLINPUT, MWMO_INPUTAVAILABLE);
+    MSG msg = {};
+    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
+        // Left for the main loop, which it ends
+        if (msg.message == WM_QUIT) {
+            PostQuitMessage((int)msg.wParam);
+            break;
+        }
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }
+}
+
 void GuiModule::runLoop() {
     MSG msg = {};
     while (GetMessage(&msg, NULL, 0, 0) > 0) {

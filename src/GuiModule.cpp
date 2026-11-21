@@ -15,7 +15,12 @@
 
 #include "lua.h"
 #include "lualib.h"
+#include <algorithm>
+#include <cinttypes>
+#include <cstdio>
+#include <cstdlib>
 #include <stdexcept>
+#include <string>
 
 namespace Luwow::Gui {
 
@@ -73,6 +78,35 @@ int showFileDialogExport(lua_State* L) {
     return callOnMainThread(L, showFileDialogNow);
 }
 
+// The services of IGuiModule.h's Topics
+void nativeHandleRequest(void* context, Luwow::Engine::Message& message) {
+    (void)context;
+    std::shared_ptr<Control> control = controlArg(message.state, -1);
+    if (!control) return;
+    message.data = std::string(control->typeName()) + " " + std::to_string(reinterpret_cast<uintptr_t>(nativeHandle(*control)));
+    message.result = 1;
+}
+
+void runOnMainThreadRequest(void* context, Luwow::Engine::Message& message) {
+    uintptr_t function = 0;
+    uintptr_t argument = 0;
+    if (std::sscanf(message.data.c_str(), "%" SCNuPTR " %" SCNuPTR, &function, &argument) != 2 || !function) return;
+    auto call = reinterpret_cast<void (*)(void*)>(function);
+    bool ran = static_cast<GuiModule*>(context)->runOnMainThread([&] { call(reinterpret_cast<void*>(argument)); });
+    message.result = ran ? 1 : 0;
+}
+
+void mainThreadWaitRequest(void* context, Luwow::Engine::Message& message) {
+    auto* gui = static_cast<GuiModule*>(context);
+    if (!gui->isMainThread()) return;
+    int milliseconds = std::clamp(std::atoi(message.data.c_str()), 0, 1000);
+    {
+        Luwow::Engine::StateRelease release(gui->getHost());
+        gui->runEvents(milliseconds);
+    }
+    message.result = 1;
+}
+
 LuauExport exports[] = {
     { "createComponent", createComponentExport },
     { "showFileDialog", showFileDialogExport },
@@ -95,6 +129,9 @@ Luwow::Engine::ILuauModule* GuiModule::initialize(Luwow::Engine::ILuauHost* host
     gui->mainThread = std::this_thread::get_id();
     gui->startPlatform();
     registerControls(host->getMainState(), host, gui);
+    host->handle(Topics::NativeHandle, nativeHandleRequest, gui);
+    host->handle(Topics::RunOnMainThread, runOnMainThreadRequest, gui);
+    host->handle(Topics::MainThreadWait, mainThreadWaitRequest, gui);
     return gui;
 }
 
