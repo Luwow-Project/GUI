@@ -1,12 +1,10 @@
 #include "Window.h"
-#include <iostream>
+#include <stdexcept>
 #include <string>
-#include "lua.h"
-#include "lualib.h"
 
 namespace Luwow::Gui {
 
-Window::Window(const WindowDescriptor& descriptor) : descriptor(descriptor) {
+Window::Window(const WindowDescriptor& descriptor) {
     hWnd = CreateWindowExA(
         WS_EX_CLIENTEDGE,
         "LuwowWindow",
@@ -29,27 +27,75 @@ Window::Window(const WindowDescriptor& descriptor) : descriptor(descriptor) {
     SetWindowLongPtr(hWnd, GWLP_USERDATA, (LONG_PTR)this);
 }
 
-uint16_t Window::registerCommandControl(ICommandControl* commandControl) {
-    uint16_t id = nextCommandId++;
-    commandControls[id] = commandControl;
+uint16_t Window::registerControl(IControl* control) {
+    uint16_t id = nextControlId++;
+    controls[id] = control;
     return id;
 }
 
-ICommandControl* Window::getCommandControl(uint16_t id) const {
-    return commandControls.at(id);
+void Window::unregisterControl(uint16_t id) {
+    controls.erase(id);
+}
+
+IControl* Window::getControl(uint16_t id) const {
+    auto it = controls.find(id);
+    return it == controls.end() ? nullptr : it->second;
 }
 
 void Window::show() {
+    if (!hWnd) return;
+    if (!shown) {
+        shown = true;
+        windowShown();
+    }
     ShowWindow(hWnd, SW_SHOW);
 }
 
-void Window::close() {
-    DestroyWindow(hWnd);
+void Window::destroyed() {
     hWnd = NULL;
+    if (shown) {
+        shown = false;
+        windowClosed();
+    }
+}
+
+void Window::close() {
+    if (hWnd) DestroyWindow(hWnd);
+}
+
+void Window::setTitle(const std::string& title) {
+    if (hWnd) SetWindowTextA(hWnd, title.c_str());
+}
+
+void Window::setBounds(int left, int top, int width, int height) {
+    if (hWnd) MoveWindow(hWnd, left, top, width, height, TRUE);
+}
+
+// A minimized window's bounds are the ones it's restored to
+void Window::getBounds(int& left, int& top, int& width, int& height) const {
+    if (!hWnd) return;
+    RECT rect = {};
+    if (IsIconic(hWnd)) {
+        WINDOWPLACEMENT placement = {};
+        placement.length = sizeof(WINDOWPLACEMENT);
+        if (!GetWindowPlacement(hWnd, &placement)) return;
+        rect = placement.rcNormalPosition;
+    } else if (!GetWindowRect(hWnd, &rect)) {
+        return;
+    }
+    left = rect.left;
+    top = rect.top;
+    width = rect.right - rect.left;
+    height = rect.bottom - rect.top;
 }
 
 Window::~Window() {
-    //DestroyWindow(hWnd);
+    if (hWnd) {
+        HWND destroying = hWnd;
+        SetWindowLongPtr(destroying, GWLP_USERDATA, 0);
+        destroyed();
+        DestroyWindow(destroying);
+    }
 }
 
 } // namespace Luwow::Gui

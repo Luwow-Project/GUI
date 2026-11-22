@@ -1,12 +1,13 @@
 #include "MenuBar.h"
+#include "Menu.h"
 #include "Window.h"
 #include <stdexcept>
 
 namespace Luwow::Gui {
 
-MenuBar::MenuBar(const MenuBarDescriptor& descriptor, IWindow* parent) {
-    Window* parentWindow = dynamic_cast<Window*>(parent);
-    if (!parentWindow) {
+MenuBar::MenuBar(IWindow* parent) {
+    window = dynamic_cast<Window*>(parent);
+    if (!window) {
         throw std::runtime_error("Parent window is not a Window");
     }
 
@@ -14,38 +15,27 @@ MenuBar::MenuBar(const MenuBarDescriptor& descriptor, IWindow* parent) {
     if (!menu) {
         throw std::runtime_error("Failed to create menu bar");
     }
-
-    for (const MenuDescriptor& menuDescriptor : descriptor.Menus) {
-        HMENU popup = CreatePopupMenu();
-        if (!popup) {
-            throw std::runtime_error("Failed to create submenu");
-        }
-
-        for (const MenuItemDescriptor& itemDescriptor : menuDescriptor.Items) {
-            auto item = std::make_unique<MenuItem>(itemDescriptor, parentWindow);
-            if (!AppendMenuA(popup, MF_STRING, item->getId(), itemDescriptor.Title.c_str())) {
-                throw std::runtime_error("Failed to append menu item");
-            }
-            items.push_back(std::move(item));
-        }
-
-        if (!AppendMenuA(menu, MF_POPUP, (UINT_PTR)popup, menuDescriptor.Title.c_str())) {
-            throw std::runtime_error("Failed to append menu");
-        }
-    }
-
-    if (!SetMenu(parentWindow->getHWND(), menu)) {
+    if (!SetMenu(window->getHWND(), menu)) {
+        DestroyMenu(menu);
         throw std::runtime_error("Failed to assign menu bar to window");
     }
-
-    DrawMenuBar(parentWindow->getHWND());
+    DrawMenuBar(window->getHWND());
 }
 
 MenuBar::~MenuBar() {
-    if (menu) {
-        DestroyMenu(menu);
-        menu = nullptr;
+    if (!window->isOpen()) return;
+    SetMenu(window->getHWND(), NULL);
+    DestroyMenu(menu);
+    DrawMenuBar(window->getHWND());
+}
+
+void MenuBar::insertMenu(size_t index, IMenu* newMenu) {
+    Menu* added = static_cast<Menu*>(newMenu);
+    if (!InsertMenuA(menu, (UINT)index, MF_BYPOSITION | MF_POPUP | MF_STRING, (UINT_PTR)added->getPopup(), added->getTitle().c_str())) {
+        throw std::runtime_error("Failed to add a menu");
     }
+    added->attach(menu, window);
+    DrawMenuBar(window->getHWND());
 }
 
 } // namespace Luwow::Gui

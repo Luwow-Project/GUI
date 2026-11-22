@@ -5,7 +5,7 @@
 namespace Luwow::Gui {
 
 // Windows descriptors mark a mnemonic with '&' ("&File", and "&&" for a literal '&').
-// GTK uses '_' in that position.
+// GTK uses '_' in that position, and "__" for a literal '_'.
 inline std::string windowsMnemonicToGtk(const std::string& title) {
     std::string result;
     result.reserve(title.size());
@@ -18,6 +18,9 @@ inline std::string windowsMnemonicToGtk(const std::string& title) {
                 result.push_back('_');
             }
             continue;
+        }
+        if (title[i] == '_') {
+            result.push_back('_');
         }
         result.push_back(title[i]);
     }

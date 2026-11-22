@@ -1,13 +1,12 @@
 local gui = require("@Luwow/gui")
 
-local window = gui.createWindow({
+local window = gui.createComponent({
   Type = "Window" :: "Window",
   Title = "Luwow Created Window",
-  Width = 400,
-  Height = 300,
+  Size = { 400, 300 },
 })
 
-local _menuBar = gui.createMenuBar({
+local _menuBar = window:add({
   Type = "MenuBar" :: "MenuBar",
   Menus = {
     {
@@ -111,20 +110,56 @@ local _menuBar = gui.createMenuBar({
       },
     },
   },
-}, window)
+})
+
+local _nameLabel = window:add({
+  Type = "TextLabel" :: "TextLabel",
+  Text = "Name",
+  Size = { 60, 20 },
+  Position = { 40, 40 },
+})
+
+local nameBox = window:add({
+  Type = "TextBox" :: "TextBox",
+  Text = "",
+  Size = { 200, 24 },
+  Position = { 110, 38 },
+}) :: gui.TextBox
+
+local _notesLabel = window:add({
+  Type = "TextLabel" :: "TextLabel",
+  Text = "Notes",
+  Size = { 60, 20 },
+  Position = { 40, 80 },
+})
+
+local notesArea = window:add({
+  Type = "TextArea" :: "TextArea",
+  Text = "",
+  Size = { 280, 100 },
+  Position = { 40, 104 },
+}) :: gui.TextArea
+
+nameBox:bindToPropertyChanged("Text"):Connect(function(text)
+  print("Name changed: " .. text)
+end)
+
+notesArea:bindToPropertyChanged("Text"):Connect(function(text)
+  print("Notes changed (" .. #text .. " chars)")
+end)
 
 local numPresses = 0
-local _button = gui.createButton({
+local _button = window:add({
   Type = "Button" :: "Button",
   Caption = "Click me",
   OnPressed = function()
     numPresses += 1
     print("Button pressed " .. numPresses .. " times")
+    print("Name: " .. nameBox.Text)
+    print("Notes: " .. notesArea.Text)
   end,
-  Width = 100,
-  Height = 30,
-  Left = 40,
-  Top = 40,
-}, window)
+  Size = { 100, 30 },
+  Position = { 40, 220 },
+})
 
 window:show()

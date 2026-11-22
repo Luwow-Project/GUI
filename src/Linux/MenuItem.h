@@ -11,12 +11,13 @@ class MenuItem : public IMenuItem {
 public:
     MenuItem(const MenuItemDescriptor& descriptor, IWindow* parent);
     ~MenuItem() override;
+    void* getNativeHandle() const override { return item->gobj(); }
+
+    void setTitle(const std::string& title) override;
 
     Gtk::MenuItem* getWidget() const { return item; }
-    void onCommand() override;
 
 private:
-    MenuItemDescriptor descriptor;
     Gtk::MenuItem* item = nullptr;
     sigc::connection activate;
 };

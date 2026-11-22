@@ -11,19 +11,32 @@ public:
     ~Window() override;
     void show() override;
     void close() override;
+    bool isOpen() const override { return open; }
     void* getNativeHandle() const override { return nativeWindow; }
-    uint16_t registerCommandControl(ICommandControl* commandControl) override;
-    ICommandControl* getCommandControl(uint16_t id) const override;
+    void setTitle(const std::string& title) override;
+    void setBounds(int left, int top, int width, int height) override;
+    void getBounds(int& left, int& top, int& width, int& height) const override;
 
-    WindowDescriptor getDescriptor() const { return descriptor; }
     void* getNativeContentView() const;
 
+    // The window was moved or resized
+    void boundsChanged() {
+        if (onBoundsChanged) onBoundsChanged();
+    }
+    // The window is closing, by close() or the user
+    void willClose();
+
 private:
-    uint16_t nextCommandId = 1;
-    std::unordered_map<uint16_t, ICommandControl*> commandControls;
-    WindowDescriptor descriptor;
+    bool open = true;
+    // Shown and not yet closed, one of the windows the run loop runs for
+    bool shown = false;
     void* nativeWindow = nullptr;
     void* nativeDelegate = nullptr;
 };
+
+// The main loop's count of shown windows. Closing the last one ends the loop, and a window that's never
+// shown doesn't keep it running.
+void windowShown();
+void windowClosed();
 
 } // namespace Luwow::Gui
